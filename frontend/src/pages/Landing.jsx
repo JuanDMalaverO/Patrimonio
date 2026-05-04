@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import {
   BarChart2, TrendingUp, Wallet, Target, Tags,
   ArrowLeftRight, ArrowRight, CheckCircle,
@@ -176,6 +177,20 @@ function MockDashboard() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Landing() {
+  const { user, loading } = useAuth();
+
+  // Spinner mientras verifica sesión (evita flash del landing para usuarios ya logueados)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Usuario con sesión activa → directo al dashboard
+  if (user) return <Navigate to="/dashboard" replace />;
+
   return (
     <div className="min-h-screen bg-paper text-ink font-sans">
 
@@ -196,10 +211,10 @@ export default function Landing() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/dashboard" className="btn-ghost text-sm">
+            <Link to="/login" className="btn-ghost text-sm">
               Iniciar sesión
             </Link>
-            <Link to="/dashboard" className="btn-primary text-sm">
+            <Link to="/register" className="btn-primary text-sm">
               Crear cuenta
             </Link>
           </div>
@@ -220,7 +235,7 @@ export default function Landing() {
             de tu patrimonio. Todo en un solo lugar, sin complejidad.
           </p>
           <div className="flex items-center gap-3 flex-wrap">
-            <Link to="/dashboard" className="btn-primary px-5 py-3 text-sm gap-2">
+            <Link to="/register" className="btn-primary px-5 py-3 text-sm gap-2">
               Empieza gratis <ArrowRight size={15} />
             </Link>
             <a href="#como-funciona" className="btn-ghost px-4 py-3 text-sm">
@@ -392,7 +407,7 @@ export default function Landing() {
           <p className="text-ink/50 text-lg mb-10 max-w-sm mx-auto leading-relaxed">
             Toma el control real de tus finanzas personales desde hoy mismo.
           </p>
-          <Link to="/dashboard" className="btn-primary px-6 py-3 text-base gap-2">
+          <Link to="/register" className="btn-primary px-6 py-3 text-base gap-2">
             Crear cuenta gratis <ArrowRight size={16} />
           </Link>
         </div>

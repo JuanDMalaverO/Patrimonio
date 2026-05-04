@@ -16,11 +16,12 @@ class AuthController {
 
     public function handle(string $method, ?string $action): void {
         match ([$method, $action]) {
-            ['POST', 'register'] => $this->register(),
-            ['POST', 'login']    => $this->login(),
-            ['POST', 'logout']   => $this->logout(),
-            ['GET',  'me']       => $this->me(),
-            default              => Response::error('Ruta de autenticación no encontrada', 404),
+            ['POST', 'register']   => $this->register(),
+            ['POST', 'login']      => $this->login(),
+            ['POST', 'logout']     => $this->logout(),
+            ['GET',  'me']         => $this->me(),
+            ['POST', 'onboarding'] => $this->completeOnboarding(),
+            default                => Response::error('Ruta de autenticación no encontrada', 404),
         };
     }
 
@@ -66,7 +67,8 @@ class AuthController {
         ");
         $stmt->execute([$binaryId, $email, $hash, $nombre]);
 
-        $usuario = $this->buildPayload($binaryId, $email, $nombre, 'user');
+        // Nuevo usuario: onboarding pendiente
+        $usuario = $this->buildPayload($binaryId, $email, $nombre, 'user', false);
         $this->createSession($binaryId, $usuario);
 
         Response::json(['usuario' => $usuario, 'mensaje' => 'Cuenta creada'], 201);
@@ -80,7 +82,7 @@ class AuthController {
         $pass  = $b['password'];
 
         $stmt = $this->db->prepare("
-            SELECT id, email, password_hash, nombre_completo, role, is_active
+            SELECT id, email, password_hash, nombre_completo, role, is_active, onboarding_completado
             FROM usuarios
             WHERE email = ? AND deleted_at IS NULL
         ");
@@ -98,7 +100,7 @@ class AuthController {
         }
 
         $binaryId = $row['id'];
-        $usuario  = $this->buildPayload($binaryId, $row['email'], $row['nombre_completo'], $row['role']);
+        $usuario  = $this->buildPayload($binaryId, $row['email'], $row['nombre_completo'], $row['role'], (bool)$row['onboarding_completado']);
         $this->createSession($binaryId, $usuario);
 
         Response::json(['usuario' => $usuario, 'mensaje' => 'Sesión iniciada']);
@@ -118,7 +120,20 @@ class AuthController {
         if (!$payload) {
             Response::error('No autenticado', 401);
         }
-        Response::json(['usuario' => $payload['user']]);
+
+        $usuario = $payload['user'];
+
+        // Leer onboarding_completado siempre fresco de la DB para evitar
+        // que un payload desactualizado haga reaparecer el tutorial.
+        $binaryId = hex2bin($usuario['id']);
+        $stmt = $this->db->prepare("SELECT onboarding_completado FROM usuarios WHERE id = ? AND deleted_at IS NULL");
+        $stmt->execute([$binaryId]);
+        $row = $stmt->fetch();
+        if ($row !== false) {
+            $usuario['onboarding_completado'] = (bool)$row['onboarding_completado'];
+        }
+
+        Response::json(['usuario' => $usuario]);
     }
 
     // ── Session pública ───────────────────────────────────────────────────────
@@ -205,12 +220,34 @@ class AuthController {
         return $row['uid'];
     }
 
-    private function buildPayload(string $binaryId, string $email, string $nombre, string $role): array {
+    private function completeOnboarding(): void {
+        $payload = $this->resolveSessionPayload();
+        if (!$payload) {
+            Response::error('No autenticado', 401);
+        }
+
+        $binaryId = hex2bin($payload['user']['id']);
+
+        // Marcar en DB
+        $this->db->prepare("UPDATE usuarios SET onboarding_completado = 1 WHERE id = ?")
+                 ->execute([$binaryId]);
+
+        // Actualizar el payload de la sesión activa para que me() lo refleje de inmediato
+        $payload['user']['onboarding_completado'] = true;
+        $token = $_COOKIE[self::COOKIE_NAME];
+        $this->db->prepare("UPDATE sesiones SET payload = ? WHERE id = ?")
+                 ->execute([json_encode($payload), $token]);
+
+        Response::json(['mensaje' => 'Onboarding completado']);
+    }
+
+    private function buildPayload(string $binaryId, string $email, string $nombre, string $role, bool $onboarding = false): array {
         return [
-            'id'              => bin2hex($binaryId),
-            'email'           => $email,
-            'nombre_completo' => $nombre,
-            'role'            => $role,
+            'id'                    => bin2hex($binaryId),
+            'email'                 => $email,
+            'nombre_completo'       => $nombre,
+            'role'                  => $role,
+            'onboarding_completado' => $onboarding,
         ];
     }
 }

@@ -4,6 +4,7 @@ const BASE = '/api';
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // Envía y recibe cookies en todas las peticiones
     ...options,
   });
   const text = await res.text();
@@ -17,30 +18,37 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  // Cuentas
-  getCuentas: () => request('/cuentas'),
-  createCuenta: (body) => request('/cuentas', { method: 'POST', body: JSON.stringify(body) }),
-  updateCuenta: (id, body) => request(`/cuentas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteCuenta: (id) => request(`/cuentas/${id}`, { method: 'DELETE' }),
+  // ── Autenticación ──────────────────────────────────────────────────────────
+  me:                  ()     => request('/auth/me'),
+  login:               (body) => request('/auth/login',      { method: 'POST', body: JSON.stringify(body) }),
+  register:            (body) => request('/auth/register',   { method: 'POST', body: JSON.stringify(body) }),
+  logout:              ()     => request('/auth/logout',     { method: 'POST' }),
+  completeOnboarding:  ()     => request('/auth/onboarding', { method: 'POST' }),
 
-  // Categorías
-  getCategorias: () => request('/categorias'),
-  createCategoria: (body) => request('/categorias', { method: 'POST', body: JSON.stringify(body) }),
-  deleteCategoria: (id) => request(`/categorias/${id}`, { method: 'DELETE' }),
+  // ── Cuentas ────────────────────────────────────────────────────────────────
+  getCuentas:    ()         => request('/cuentas'),
+  createCuenta:  (body)     => request('/cuentas',     { method: 'POST',   body: JSON.stringify(body) }),
+  updateCuenta:  (id, body) => request(`/cuentas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCuenta:  (id)       => request(`/cuentas/${id}`, { method: 'DELETE' }),
 
-  // Transacciones
+  // ── Categorías ─────────────────────────────────────────────────────────────
+  getCategorias:    ()     => request('/categorias'),
+  createCategoria:  (body) => request('/categorias',     { method: 'POST',   body: JSON.stringify(body) }),
+  deleteCategoria:  (id)   => request(`/categorias/${id}`, { method: 'DELETE' }),
+
+  // ── Transacciones ──────────────────────────────────────────────────────────
   getTransacciones: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/transacciones${qs ? `?${qs}` : ''}`);
   },
-  createTransaccion: (body) => request('/transacciones', { method: 'POST', body: JSON.stringify(body) }),
-  deleteTransaccion: (id) => request(`/transacciones/${id}`, { method: 'DELETE' }),
+  createTransaccion: (body) => request('/transacciones',     { method: 'POST',   body: JSON.stringify(body) }),
+  deleteTransaccion: (id)   => request(`/transacciones/${id}`, { method: 'DELETE' }),
 
-  // Presupuestos
-  getPresupuestos: (periodo) => request(`/presupuestos?periodo=${periodo}`),
-  createPresupuesto: (body) => request('/presupuestos', { method: 'POST', body: JSON.stringify(body) }),
-  deletePresupuesto: (id) => request(`/presupuestos/${id}`, { method: 'DELETE' }),
+  // ── Presupuestos ───────────────────────────────────────────────────────────
+  getPresupuestos:    (periodo) => request(`/presupuestos?periodo=${periodo}`),
+  createPresupuesto:  (body)    => request('/presupuestos',     { method: 'POST',   body: JSON.stringify(body) }),
+  deletePresupuesto:  (id)      => request(`/presupuestos/${id}`, { method: 'DELETE' }),
 
-  // Dashboard
+  // ── Dashboard ──────────────────────────────────────────────────────────────
   getDashboard: (periodo) => request(`/dashboard${periodo ? `?periodo=${periodo}` : ''}`),
 };

@@ -28,6 +28,9 @@ CREATE TABLE usuarios (
     is_verified BOOLEAN DEFAULT FALSE,
     role ENUM('user', 'admin', 'editor') DEFAULT 'user',
 
+    -- Onboarding
+    onboarding_completado TINYINT(1) DEFAULT 0,
+
     -- Trazabilidad
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -60,14 +63,17 @@ CREATE TABLE sesiones (
 -- -----------------------------------------------------
 CREATE TABLE cuentas (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    usuario_id BINARY(16) NOT NULL, -- Corregido
+    usuario_id BINARY(16) NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     tipo ENUM('ahorros', 'efectivo', 'tarjeta', 'inversion', 'otro') NOT NULL,
     saldo_inicial DECIMAL(15,2) DEFAULT 0.00,
+    moneda CHAR(3) DEFAULT 'COP',
     color VARCHAR(7) DEFAULT '#1f2937',
     icono VARCHAR(30) DEFAULT 'wallet',
+    activa TINYINT(1) DEFAULT 1,
+    tea_anual DECIMAL(7,4) NULL DEFAULT NULL,  -- Tasa Efectiva Anual (%). NULL = sin rendimiento
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

@@ -1,41 +1,61 @@
 <?php
 // backend/api/index.php
-// Router REST para el sistema de finanzas
 
-// CORS
-header('Access-Control-Allow-Origin: *');
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// Orígenes permitidos: Vite dev server y producción (mismo dominio).
+// Al usar credentials:true, el origen debe ser explícito (no wildcard).
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowed = ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
+
+if (in_array($origin, $allowed)) {
+    header("Access-Control-Allow-Origin: {$origin}");
+    header('Access-Control-Allow-Credentials: true');
+} elseif (empty($origin)) {
+    // Petición directa (p.ej. desde Postman/curl), permitir sin credenciales
+    header('Access-Control-Allow-Origin: *');
+}
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
+// ── Dependencias ──────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../utils/response.php';
+require_once __DIR__ . '/../controllers/AuthController.php';
 require_once __DIR__ . '/../controllers/CuentasController.php';
 require_once __DIR__ . '/../controllers/CategoriasController.php';
 require_once __DIR__ . '/../controllers/TransaccionesController.php';
 require_once __DIR__ . '/../controllers/PresupuestosController.php';
 require_once __DIR__ . '/../controllers/DashboardController.php';
 
-// MVP: usuario fijo. En producción viene del JWT/sesión.
-define('USER_ID', 1);
-
 $db = (new Database())->connect();
 
-// Parseo de URI: /api/recurso/[id]/[sub]
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$base = '/api';
-$path = trim(str_replace($base, '', $uri), '/');
-$parts = $path === '' ? [] : explode('/', $path);
-$method = $_SERVER['REQUEST_METHOD'];
-
+// ── Parseo de ruta ────────────────────────────────────────────────────────────
+$uri      = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path     = trim(str_replace('/api', '', $uri), '/');
+$parts    = $path === '' ? [] : explode('/', $path);
+$method   = $_SERVER['REQUEST_METHOD'];
 $resource = $parts[0] ?? null;
-$id = $parts[1] ?? null;
+$id       = $parts[1] ?? null;
 
 try {
+    // ── Rutas públicas (sin sesión) ───────────────────────────────────────────
+    if ($resource === 'auth') {
+        (new AuthController($db))->handle($method, $id);
+        exit;
+    }
+
+    // ── Rutas protegidas: sesión requerida ────────────────────────────────────
+    // requireSession() valida la cookie, actualiza last_activity y retorna
+    // el ID binario del usuario. Si no hay sesión válida, emite 401 y termina.
+    $userId = (new AuthController($db))->requireSession();
+    define('USER_ID', $userId);
+
     switch ($resource) {
         case 'cuentas':
             (new CuentasController($db))->handle($method, $id);
@@ -54,25 +74,7 @@ try {
             break;
         case null:
         case '':
-            Response::json([
-                'name' => 'Finanzas Personales API',
-                'version' => '1.0.0',
-                'endpoints' => [
-                    'GET    /api/cuentas',
-                    'POST   /api/cuentas',
-                    'PUT    /api/cuentas/{id}',
-                    'DELETE /api/cuentas/{id}',
-                    'GET    /api/categorias',
-                    'POST   /api/categorias',
-                    'GET    /api/transacciones?desde=YYYY-MM-DD&hasta=YYYY-MM-DD',
-                    'POST   /api/transacciones',
-                    'DELETE /api/transacciones/{id}',
-                    'GET    /api/presupuestos?periodo=YYYY-MM',
-                    'POST   /api/presupuestos',
-                    'DELETE /api/presupuestos/{id}',
-                    'GET    /api/dashboard',
-                ],
-            ]);
+            Response::json(['name' => 'Patrimonio API', 'version' => '2.0.0']);
             break;
         default:
             Response::error('Recurso no encontrado', 404);
