@@ -1,7 +1,7 @@
 // src/pages/Transacciones.jsx
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Trash2, Filter } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Plus, ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Trash2, Filter, Wallet } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { formatCOP, formatDate } from '../utils/format';
 import PageHeader from '../components/PageHeader';
@@ -16,13 +16,14 @@ const TIPO_META = {
 
 export default function Transacciones() {
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const [trans, setTrans] = useState([]);
   const [cuentas, setCuentas] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [filtro, setFiltro] = useState('todos');
-  const [modal, setModal] = useState(params.get('nuevo') === '1');
+  const [modal, setModal] = useState(false); // Se abre sólo si hay cuentas
 
   const load = async () => {
     setLoading(true);
@@ -35,10 +36,19 @@ export default function Transacciones() {
       setTrans(t);
       setCuentas(c.cuentas);
       setCategorias(cat);
+      // Abrir modal si venía con ?nuevo=1 Y hay cuentas disponibles
+      if (params.get('nuevo') === '1' && c.cuentas.length > 0) setModal(true);
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
+
+  const sinCuentas = !loading && cuentas.length === 0;
+
+  const abrirModal = () => {
+    if (sinCuentas) return; // Doble seguro
+    setModal(true);
+  };
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta transacción?')) return;
@@ -68,12 +78,41 @@ export default function Transacciones() {
         title="Movimientos"
         subtitle="Historial completo de ingresos, egresos y transferencias entre cuentas."
         actions={
-          <button onClick={() => setModal(true)} className="btn-primary">
-            <Plus size={16} strokeWidth={1.5} />
-            Nuevo movimiento
-          </button>
+          sinCuentas ? (
+            <button
+              onClick={() => navigate('/cuentas')}
+              className="btn-primary"
+            >
+              <Wallet size={16} strokeWidth={1.5} />
+              Crear primera cuenta
+            </button>
+          ) : (
+            <button onClick={abrirModal} className="btn-primary">
+              <Plus size={16} strokeWidth={1.5} />
+              Nuevo movimiento
+            </button>
+          )
         }
       />
+
+      {/* Aviso cuando no hay cuentas */}
+      {sinCuentas && (
+        <div className="mx-10 mt-2 mb-0">
+          <div className="border border-gold/30 bg-gold/5 rounded-sm px-5 py-4 flex items-start gap-3">
+            <Wallet size={16} className="text-gold mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+            <div>
+              <p className="text-sm font-medium text-ink">Necesitas al menos una cuenta para registrar movimientos.</p>
+              <p className="text-sm text-ink/55 mt-0.5">
+                Ve a{' '}
+                <button onClick={() => navigate('/cuentas')} className="underline underline-offset-2 hover:text-ink transition-colors">
+                  Cuentas
+                </button>
+                {' '}y crea tu primera cuenta antes de registrar ingresos o gastos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="px-10 py-8 space-y-6">
         {/* Filtros */}

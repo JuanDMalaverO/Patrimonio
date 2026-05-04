@@ -15,17 +15,12 @@ class CuentasController {
         }
     }
 
-    /**
-     * Saldo dinámico = saldo_inicial
-     *  + ingresos a la cuenta
-     *  - egresos desde la cuenta
-     *  + transferencias recibidas
-     *  - transferencias enviadas
-     */
     private function index(): void {
         $sql = "
             SELECT
-                c.id, c.nombre, c.tipo, c.saldo_inicial, c.moneda, c.color, c.icono, c.activa,
+                c.id, c.nombre, c.tipo, c.saldo_inicial, c.moneda,
+                c.color, c.icono, c.activa, c.tea_anual,
+                DATE(c.created_at) AS fecha_creacion,
                 COALESCE(c.saldo_inicial, 0)
                 + COALESCE((SELECT SUM(monto) FROM transacciones t
                             WHERE t.cuenta_id = c.id AND t.tipo = 'ingreso'), 0)
@@ -44,18 +39,18 @@ class CuentasController {
         $stmt->execute([USER_ID]);
         $cuentas = $stmt->fetchAll();
 
-        // Cast numérico
         foreach ($cuentas as &$c) {
             $c['saldo_inicial'] = (float)$c['saldo_inicial'];
             $c['saldo_actual']  = (float)$c['saldo_actual'];
+            $c['tea_anual']     = $c['tea_anual'] !== null ? (float)$c['tea_anual'] : null;
         }
 
         $patrimonio = array_sum(array_column($cuentas, 'saldo_actual'));
 
         Response::json([
-            'cuentas' => $cuentas,
+            'cuentas'         => $cuentas,
             'patrimonio_neto' => round($patrimonio, 2),
-            'total_cuentas' => count($cuentas),
+            'total_cuentas'   => count($cuentas),
         ]);
     }
 
@@ -68,8 +63,17 @@ class CuentasController {
             Response::error('Tipo de cuenta inválido', 422);
         }
 
-        $sql = "INSERT INTO cuentas (usuario_id, nombre, tipo, saldo_inicial, moneda, color, icono)
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        // tea_anual: validar que sea un número positivo si se proporciona
+        $tea = isset($body['tea_anual']) && $body['tea_anual'] !== '' && $body['tea_anual'] !== null
+            ? (float)$body['tea_anual']
+            : null;
+
+        if ($tea !== null && ($tea <= 0 || $tea > 999)) {
+            Response::error('La tasa efectiva anual debe estar entre 0.01% y 999%', 422);
+        }
+
+        $sql = "INSERT INTO cuentas (usuario_id, nombre, tipo, saldo_inicial, moneda, color, icono, tea_anual)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             USER_ID,
@@ -79,6 +83,7 @@ class CuentasController {
             $body['moneda'] ?? 'COP',
             $body['color'] ?? '#1a1a1a',
             $body['icono'] ?? 'wallet',
+            $tea,
         ]);
         Response::json(['id' => $this->db->lastInsertId(), 'mensaje' => 'Cuenta creada'], 201);
     }
@@ -86,7 +91,12 @@ class CuentasController {
     private function update(?string $id): void {
         if (!$id) Response::error('ID requerido', 400);
         $body = Response::getBody();
-        $sql = "UPDATE cuentas SET nombre = ?, tipo = ?, color = ?, icono = ?
+
+        $tea = isset($body['tea_anual']) && $body['tea_anual'] !== '' && $body['tea_anual'] !== null
+            ? (float)$body['tea_anual']
+            : null;
+
+        $sql = "UPDATE cuentas SET nombre = ?, tipo = ?, color = ?, icono = ?, tea_anual = ?
                 WHERE id = ? AND usuario_id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -94,6 +104,7 @@ class CuentasController {
             $body['tipo'] ?? 'otro',
             $body['color'] ?? '#1a1a1a',
             $body['icono'] ?? 'wallet',
+            $tea,
             $id, USER_ID,
         ]);
         Response::json(['mensaje' => 'Cuenta actualizada']);
@@ -101,7 +112,6 @@ class CuentasController {
 
     private function destroy(?string $id): void {
         if (!$id) Response::error('ID requerido', 400);
-        // Soft delete para preservar histórico de transacciones
         $stmt = $this->db->prepare("UPDATE cuentas SET activa = 0 WHERE id = ? AND usuario_id = ?");
         $stmt->execute([$id, USER_ID]);
         Response::json(['mensaje' => 'Cuenta archivada']);
