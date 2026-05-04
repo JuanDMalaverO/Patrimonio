@@ -63,7 +63,7 @@ export default function Presupuestos() {
         }
       />
 
-      <div className="px-10 py-8 space-y-6">
+      <div className="page-body space-y-5 md:space-y-6">
         {loading && <Loading />}
         {err && <ErrorBox message={err} />}
 
@@ -75,7 +75,7 @@ export default function Presupuestos() {
           />
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
           {data?.presupuestos.map(p => {
             const estado = ESTADO_STYLES[p.estado];
             const EstadoIcon = estado.icon;

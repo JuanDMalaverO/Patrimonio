@@ -1,6 +1,7 @@
 // src/App.jsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.jsx';
+import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
@@ -11,8 +12,8 @@ import Cuentas from './pages/Cuentas';
 import Transacciones from './pages/Transacciones';
 import Presupuestos from './pages/Presupuestos';
 import Categorias from './pages/Categorias';
+import Configuracion from './pages/Configuracion';
 
-// Rutas protegidas del app (requieren sesión activa)
 function AppShell() {
   return (
     <ProtectedRoute>
@@ -23,6 +24,7 @@ function AppShell() {
           <Route path="/transacciones" element={<Transacciones />} />
           <Route path="/presupuestos"  element={<Presupuestos />} />
           <Route path="/categorias"    element={<Categorias />} />
+          <Route path="/configuracion" element={<Configuracion />} />
           <Route path="*"              element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Layout>
@@ -32,13 +34,15 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/"          element={<Landing />} />
-        <Route path="/login"     element={<Login />} />
-        <Route path="/register"  element={<Register />} />
-        <Route path="/*"         element={<AppShell />} />
-      </Routes>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/"         element={<Landing />} />
+          <Route path="/login"    element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/*"        element={<AppShell />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

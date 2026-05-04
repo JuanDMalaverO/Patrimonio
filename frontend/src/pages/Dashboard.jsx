@@ -52,10 +52,10 @@ export default function Dashboard() {
         }
       />
 
-      <div className="px-10 py-8 space-y-10">
+      <div className="page-body space-y-6 md:space-y-10">
         {/* HERO PATRIMONIO */}
-        <section className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 md:col-span-7 border border-ink/10 bg-ink text-paper rounded-sm p-10 relative overflow-hidden">
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+          <div className="col-span-1 md:col-span-7 border border-ink/10 bg-ink text-paper rounded-sm p-6 md:p-10 relative overflow-hidden">
             {/* Marca de agua decorativa */}
             <div
               className="absolute -right-10 -bottom-20 font-display text-[280px] leading-none text-paper/[0.04] select-none pointer-events-none"
@@ -83,7 +83,7 @@ export default function Dashboard() {
           </div>
 
           {/* Balance del mes */}
-          <div className="col-span-12 md:col-span-5 grid grid-rows-2 gap-6">
+          <div className="col-span-1 md:col-span-5 grid grid-cols-2 md:grid-cols-1 grid-rows-1 md:grid-rows-2 gap-4 md:gap-6">
             <Stat
               eyebrow="Ingresos del mes"
               valor={flujo_mes.ingresos}
@@ -100,8 +100,8 @@ export default function Dashboard() {
         </section>
 
         {/* FLUJO DE CAJA + BALANCE */}
-        <section className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 lg:col-span-8 card-elevated p-8">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+          <div className="col-span-1 lg:col-span-8 card-elevated p-5 md:p-8">
             <div className="flex items-end justify-between mb-6">
               <div>
                 <div className="eyebrow mb-1">Flujo de caja</div>
@@ -167,7 +167,7 @@ export default function Dashboard() {
           </div>
 
           {/* Balance card */}
-          <div className="col-span-12 lg:col-span-4 card-elevated p-8 flex flex-col">
+          <div className="col-span-1 lg:col-span-4 card-elevated p-5 md:p-8 flex flex-col">
             <div className="eyebrow mb-1">Balance del mes</div>
             <h3 className="font-display text-2xl tracking-tightest mb-6">Resultado neto</h3>
 
@@ -191,7 +191,7 @@ export default function Dashboard() {
         <AiInsights periodo={periodo} />
 
         {/* TOP CATEGORÍAS */}
-        <section className="card-elevated p-8">
+        <section className="card-elevated p-5 md:p-8">
           <div className="flex items-end justify-between mb-6">
             <div>
               <div className="eyebrow mb-1">Distribución del gasto</div>
@@ -203,8 +203,8 @@ export default function Dashboard() {
           {top_categorias.length === 0 ? (
             <Empty title="Aún sin datos" hint="Registra tus primeros egresos para ver la distribución." />
           ) : (
-            <div className="grid grid-cols-12 gap-8">
-              <div className="col-span-12 md:col-span-7">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+              <div className="col-span-1 md:col-span-7">
                 <div className="h-64">
                   <ResponsiveContainer>
                     <BarChart data={top_categorias} layout="vertical" margin={{ left: 0, right: 30 }}>
@@ -238,7 +238,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="col-span-12 md:col-span-5 space-y-3">
+              <div className="col-span-1 md:col-span-5 space-y-3">
                 {top_categorias.map((c, i) => (
                   <div key={c.id} className="flex items-center gap-3 py-3 border-b border-ink/10 last:border-0">
                     <span className="font-mono text-[10px] text-ink/40 w-6">{String(i + 1).padStart(2, '0')}</span>

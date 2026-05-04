@@ -3,7 +3,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 
 export function Loading({ label = 'Cargando' }) {
   return (
-    <div className="flex items-center gap-3 text-ink/50 px-10 py-16">
+    <div className="flex items-center justify-center gap-3 text-ink/50 py-16">
       <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
       <span className="text-sm tracking-wide">{label}…</span>
     </div>
@@ -12,7 +12,7 @@ export function Loading({ label = 'Cargando' }) {
 
 export function ErrorBox({ message }) {
   return (
-    <div className="mx-10 my-6 border border-rust/40 bg-rust/5 px-5 py-4 rounded-sm flex items-start gap-3">
+    <div className="my-4 border border-rust/40 bg-rust/5 px-5 py-4 rounded-sm flex items-start gap-3">
       <AlertCircle size={18} className="text-rust flex-shrink-0 mt-0.5" strokeWidth={1.5} />
       <div className="text-sm text-rust">{message}</div>
     </div>

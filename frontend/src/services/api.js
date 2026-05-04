@@ -25,6 +25,10 @@ export const api = {
   logout:              ()     => request('/auth/logout',     { method: 'POST' }),
   completeOnboarding:  ()     => request('/auth/onboarding', { method: 'POST' }),
 
+  // ── Perfil ─────────────────────────────────────────────────────────────────
+  updateProfile:  (body) => request('/auth/profile',  { method: 'PUT', body: JSON.stringify(body) }),
+  changePassword: (body) => request('/auth/password', { method: 'PUT', body: JSON.stringify(body) }),
+
   // ── Suscripción ────────────────────────────────────────────────────────────
   upgradePlan:   () => request('/subscription/upgrade',   { method: 'POST' }),
   downgradePlan: () => request('/subscription/downgrade', { method: 'POST' }),

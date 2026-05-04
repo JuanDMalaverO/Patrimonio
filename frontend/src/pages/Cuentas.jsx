@@ -137,7 +137,7 @@ export default function Cuentas() {
         }
       />
 
-      <div className="px-10 py-8 space-y-8">
+      <div className="page-body space-y-6 md:space-y-8">
         {loading && <Loading />}
         {err && <ErrorBox message={err} />}
 
@@ -165,7 +165,7 @@ export default function Cuentas() {
                 hint="Crea tu primera billetera para comenzar a registrar movimientos."
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                 {data.cuentas.map((c) => (
                   <CuentaCard key={c.id} c={c} onDelete={handleDelete} />
                 ))}

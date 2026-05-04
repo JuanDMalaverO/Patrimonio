@@ -22,6 +22,8 @@ class AuthController {
             ['POST', 'logout']     => $this->logout(),
             ['GET',  'me']         => $this->me(),
             ['POST', 'onboarding'] => $this->completeOnboarding(),
+            ['PUT',  'profile']    => $this->updateProfile(),
+            ['PUT',  'password']   => $this->changePassword(),
             default                => Response::error('Ruta de autenticación no encontrada', 404),
         };
     }
@@ -249,6 +251,57 @@ class AuthController {
                  ->execute([json_encode($payload), $token]);
 
         Response::json(['mensaje' => 'Onboarding completado']);
+    }
+
+    private function updateProfile(): void {
+        $payload = $this->resolveSessionPayload();
+        if (!$payload) Response::error('No autenticado', 401);
+
+        $b      = Response::getBody();
+        $nombre = trim($b['nombre_completo'] ?? '');
+        if (mb_strlen($nombre) < 2) Response::error('El nombre debe tener al menos 2 caracteres', 422);
+
+        $binaryId = hex2bin($payload['user']['id']);
+        $this->db->prepare("UPDATE usuarios SET nombre_completo = ? WHERE id = ?")
+                 ->execute([$nombre, $binaryId]);
+
+        // Sincronizar payload de sesión
+        $payload['user']['nombre_completo'] = $nombre;
+        $token = $_COOKIE[self::COOKIE_NAME] ?? null;
+        if ($token) {
+            $this->db->prepare("UPDATE sesiones SET payload = ? WHERE id = ?")
+                     ->execute([json_encode($payload), $token]);
+        }
+
+        Response::json(['nombre_completo' => $nombre, 'mensaje' => 'Perfil actualizado']);
+    }
+
+    private function changePassword(): void {
+        $payload = $this->resolveSessionPayload();
+        if (!$payload) Response::error('No autenticado', 401);
+
+        $b           = Response::getBody();
+        $actual      = $b['password_actual']  ?? '';
+        $nueva       = $b['password_nueva']   ?? '';
+        $confirmacion = $b['password_confirmar'] ?? '';
+
+        if (mb_strlen($nueva) < 8) Response::error('La contraseña nueva debe tener al menos 8 caracteres', 422);
+        if ($nueva !== $confirmacion) Response::error('Las contraseñas nuevas no coinciden', 422);
+
+        $binaryId = hex2bin($payload['user']['id']);
+        $stmt     = $this->db->prepare("SELECT password_hash FROM usuarios WHERE id = ?");
+        $stmt->execute([$binaryId]);
+        $row = $stmt->fetch();
+
+        if (!$row || !password_verify($actual, $row['password_hash'])) {
+            Response::error('La contraseña actual es incorrecta', 401);
+        }
+
+        $hash = password_hash($nueva, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
+        $this->db->prepare("UPDATE usuarios SET password_hash = ? WHERE id = ?")
+                 ->execute([$hash, $binaryId]);
+
+        Response::json(['mensaje' => 'Contraseña actualizada correctamente']);
     }
 
     private function buildPayload(string $binaryId, string $email, string $nombre, string $role, bool $onboarding = false, string $plan = 'free'): array {

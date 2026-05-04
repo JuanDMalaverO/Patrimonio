@@ -114,7 +114,7 @@ export default function Transacciones() {
         </div>
       )}
 
-      <div className="px-10 py-8 space-y-6">
+      <div className="page-body space-y-5 md:space-y-6">
         {/* Filtros */}
         <div className="flex items-center gap-1 border-b border-ink/10 pb-1">
           <Filter size={14} className="text-ink/40 mr-2" strokeWidth={1.5} />

@@ -49,7 +49,7 @@ export default function Categorias() {
         }
       />
 
-      <div className="px-10 py-8 space-y-10">
+      <div className="page-body space-y-8 md:space-y-10">
         {loading && <Loading />}
         {err && <ErrorBox message={err} />}
 
@@ -94,7 +94,7 @@ function Section({ titulo, icono, color, items, onDelete }) {
       {items.length === 0 ? (
         <Empty title={`Sin categorías de ${titulo.toLowerCase()}`} hint="Agrega una para comenzar." />
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {items.map(c => (
             <div
               key={c.id}

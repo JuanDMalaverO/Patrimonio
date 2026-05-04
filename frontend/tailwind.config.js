@@ -2,7 +2,6 @@
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   safelist: [
-    // Clases dinámicas usadas con interpolación de estado/categoría
     'bg-sage', 'bg-rust', 'bg-gold', 'bg-ink',
     'text-sage', 'text-rust', 'text-gold', 'text-ink',
     'border-sage', 'border-rust', 'border-gold', 'border-ink',
@@ -13,25 +12,28 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Display: serif editorial (Fraunces). Body: sans geométrico (Söhne-style via Manrope). Mono: JetBrains.
         display: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['Manrope', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans:    ['Manrope', 'system-ui', 'sans-serif'],
+        mono:    ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
-        ink:    '#0a0a0a',     // negro tinta
-        paper:  '#f5f3ee',     // crema editorial
-        bone:   '#ebe7df',
-        sage:   '#5a6b58',     // verde profundo
-        rust:   '#a8472a',     // rojizo terracota
+        // ink/paper/bone/slate2 usan CSS custom properties para soportar dark mode
+        // automáticamente en TODAS las variantes de opacidad (bg-ink/10, text-ink/50, etc.)
+        ink:    'rgb(var(--c-ink)    / <alpha-value>)',
+        paper:  'rgb(var(--c-paper)  / <alpha-value>)',
+        bone:   'rgb(var(--c-bone)   / <alpha-value>)',
+        slate2: 'rgb(var(--c-slate2) / <alpha-value>)',
+        // Colores de acento: fijos en ambos temas
+        sage:   '#5a6b58',
+        rust:   '#a8472a',
         gold:   '#a88a3a',
-        slate2: '#2a2d2e',
       },
       letterSpacing: {
         tightest: '-0.04em',
       },
       boxShadow: {
-        'card': '0 1px 0 rgba(10,10,10,0.06), 0 0 0 1px rgba(10,10,10,0.06)',
+        // CSS variable para que la sombra también se adapte al tema
+        'card': 'var(--shadow-card)',
       },
     },
   },
