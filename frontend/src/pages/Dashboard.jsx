@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx';
+import OnboardingTutorial from '../components/OnboardingTutorial.jsx';
 import {
   AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, YAxis
 } from 'recharts';
@@ -15,7 +17,9 @@ export default function Dashboard() {
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const periodo = currentPeriod();
+  const mostrarTutorial = user && !user.onboarding_completado;
 
   useEffect(() => {
     setLoading(true);
@@ -34,6 +38,7 @@ export default function Dashboard() {
 
   return (
     <>
+      {mostrarTutorial && <OnboardingTutorial />}
       <PageHeader
         eyebrow={`Periodo · ${periodLabel(periodo)}`}
         title="Resumen"
