@@ -1,0 +1,13 @@
+# API keys y configuración sensible — NUNCA subir al repo
+backend/config/ai.php
+
+# Dependencias
+frontend/node_modules/
+
+# Build
+frontend/dist/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
