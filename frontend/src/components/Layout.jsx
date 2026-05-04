@@ -1,6 +1,6 @@
 // src/components/Layout.jsx
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Wallet, ArrowLeftRight, Target, Tags, LogOut } from 'lucide-react';
+import { LayoutDashboard, Wallet, ArrowLeftRight, Target, Tags, LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 const NAV = [
@@ -65,20 +65,35 @@ export default function Layout({ children }) {
           ))}
         </nav>
 
-        {/* Footer: usuario + logout */}
-        <div className="px-4 py-4 border-t border-ink/10 flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-sage flex-shrink-0 animate-pulse" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-ink truncate">{firstName}</p>
-            <p className="text-[10px] text-ink/40 truncate">{user?.email ?? ''}</p>
+        {/* Footer: plan badge + usuario + logout */}
+        <div className="px-4 py-4 border-t border-ink/10 space-y-3">
+          {/* Badge de plan */}
+          {user?.plan === 'premium' ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-gold/8 border border-gold/20">
+              <Sparkles size={11} className="text-gold flex-shrink-0" strokeWidth={2} />
+              <span className="text-[10px] uppercase tracking-[0.18em] font-semibold text-gold">Premium</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-ink/5 border border-ink/10">
+              <span className="text-[10px] uppercase tracking-[0.18em] font-medium text-ink/35">Plan Free</span>
+            </div>
+          )}
+
+          {/* Usuario + logout */}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-sage flex-shrink-0 animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-ink truncate">{firstName}</p>
+              <p className="text-[10px] text-ink/40 truncate">{user?.email ?? ''}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Cerrar sesión"
+              className="flex-shrink-0 p-1.5 text-ink/35 hover:text-rust transition-colors rounded-sm hover:bg-rust/5"
+            >
+              <LogOut size={14} strokeWidth={1.5} />
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            title="Cerrar sesión"
-            className="flex-shrink-0 p-1.5 text-ink/35 hover:text-rust transition-colors rounded-sm hover:bg-rust/5"
-          >
-            <LogOut size={14} strokeWidth={1.5} />
-          </button>
         </div>
 
       </aside>

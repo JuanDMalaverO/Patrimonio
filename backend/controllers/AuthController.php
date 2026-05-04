@@ -3,6 +3,7 @@
 
 class AuthController {
     private PDO $db;
+    private ?array $cachedPayload = null; // Evita doble query por request
 
     private const COOKIE_NAME  = 'patrimonio_session';
     private const SESSION_DAYS = 30;
@@ -82,7 +83,7 @@ class AuthController {
         $pass  = $b['password'];
 
         $stmt = $this->db->prepare("
-            SELECT id, email, password_hash, nombre_completo, role, is_active, onboarding_completado
+            SELECT id, email, password_hash, nombre_completo, role, is_active, onboarding_completado, plan
             FROM usuarios
             WHERE email = ? AND deleted_at IS NULL
         ");
@@ -100,7 +101,7 @@ class AuthController {
         }
 
         $binaryId = $row['id'];
-        $usuario  = $this->buildPayload($binaryId, $row['email'], $row['nombre_completo'], $row['role'], (bool)$row['onboarding_completado']);
+        $usuario  = $this->buildPayload($binaryId, $row['email'], $row['nombre_completo'], $row['role'], (bool)$row['onboarding_completado'], $row['plan'] ?? 'free');
         $this->createSession($binaryId, $usuario);
 
         Response::json(['usuario' => $usuario, 'mensaje' => 'Sesión iniciada']);
@@ -126,11 +127,12 @@ class AuthController {
         // Leer onboarding_completado siempre fresco de la DB para evitar
         // que un payload desactualizado haga reaparecer el tutorial.
         $binaryId = hex2bin($usuario['id']);
-        $stmt = $this->db->prepare("SELECT onboarding_completado FROM usuarios WHERE id = ? AND deleted_at IS NULL");
+        $stmt = $this->db->prepare("SELECT onboarding_completado, plan FROM usuarios WHERE id = ? AND deleted_at IS NULL");
         $stmt->execute([$binaryId]);
         $row = $stmt->fetch();
         if ($row !== false) {
             $usuario['onboarding_completado'] = (bool)$row['onboarding_completado'];
+            $usuario['plan']                  = $row['plan'] ?? 'free';
         }
 
         Response::json(['usuario' => $usuario]);
@@ -153,6 +155,8 @@ class AuthController {
     // ── Privados ──────────────────────────────────────────────────────────────
 
     private function resolveSessionPayload(): ?array {
+        if ($this->cachedPayload !== null) return $this->cachedPayload;
+
         $token = $_COOKIE[self::COOKIE_NAME] ?? null;
         if (!$token || strlen($token) !== 128) return null;
 
@@ -169,11 +173,17 @@ class AuthController {
             return null;
         }
 
-        // Actualizar actividad sin alterar expires_at
         $this->db->prepare("UPDATE sesiones SET last_activity = NOW() WHERE id = ?")
                  ->execute([$token]);
 
-        return json_decode($session['payload'], true);
+        $this->cachedPayload = json_decode($session['payload'], true);
+        return $this->cachedPayload;
+    }
+
+    /** Retorna el plan del usuario desde el payload cacheado. */
+    public function getUserPlan(): string {
+        $payload = $this->resolveSessionPayload();
+        return $payload['user']['plan'] ?? 'free';
     }
 
     private function createSession(string $binaryId, array $usuario): void {
@@ -241,13 +251,14 @@ class AuthController {
         Response::json(['mensaje' => 'Onboarding completado']);
     }
 
-    private function buildPayload(string $binaryId, string $email, string $nombre, string $role, bool $onboarding = false): array {
+    private function buildPayload(string $binaryId, string $email, string $nombre, string $role, bool $onboarding = false, string $plan = 'free'): array {
         return [
             'id'                    => bin2hex($binaryId),
             'email'                 => $email,
             'nombre_completo'       => $nombre,
             'role'                  => $role,
             'onboarding_completado' => $onboarding,
+            'plan'                  => $plan,
         ];
     }
 }

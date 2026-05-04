@@ -2,16 +2,13 @@
 // backend/api/index.php
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-// Orígenes permitidos: Vite dev server y producción (mismo dominio).
-// Al usar credentials:true, el origen debe ser explícito (no wildcard).
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$origin  = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowed = ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
 
 if (in_array($origin, $allowed)) {
     header("Access-Control-Allow-Origin: {$origin}");
     header('Access-Control-Allow-Credentials: true');
 } elseif (empty($origin)) {
-    // Petición directa (p.ej. desde Postman/curl), permitir sin credenciales
     header('Access-Control-Allow-Origin: *');
 }
 
@@ -25,8 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // ── Dependencias ──────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/ai.php';
 require_once __DIR__ . '/../utils/response.php';
 require_once __DIR__ . '/../controllers/AuthController.php';
+require_once __DIR__ . '/../controllers/SubscriptionController.php';
+require_once __DIR__ . '/../controllers/AiController.php';
 require_once __DIR__ . '/../controllers/CuentasController.php';
 require_once __DIR__ . '/../controllers/CategoriasController.php';
 require_once __DIR__ . '/../controllers/TransaccionesController.php';
@@ -50,13 +50,20 @@ try {
         exit;
     }
 
-    // ── Rutas protegidas: sesión requerida ────────────────────────────────────
-    // requireSession() valida la cookie, actualiza last_activity y retorna
-    // el ID binario del usuario. Si no hay sesión válida, emite 401 y termina.
-    $userId = (new AuthController($db))->requireSession();
-    define('USER_ID', $userId);
+    // ── Rutas protegidas ──────────────────────────────────────────────────────
+    // Se reutiliza la instancia para aprovechar el cachedPayload y
+    // evitar una segunda query al validar getUserPlan()
+    $auth = new AuthController($db);
+    define('USER_ID',   $auth->requireSession());
+    define('USER_PLAN', $auth->getUserPlan());   // 'free' | 'premium'
 
     switch ($resource) {
+        case 'subscription':
+            (new SubscriptionController($db))->handle($method, $id);
+            break;
+        case 'ai':
+            (new AiController($db))->handle($method, $id);
+            break;
         case 'cuentas':
             (new CuentasController($db))->handle($method, $id);
             break;
@@ -74,7 +81,7 @@ try {
             break;
         case null:
         case '':
-            Response::json(['name' => 'Patrimonio API', 'version' => '2.0.0']);
+            Response::json(['name' => 'Patrimonio API', 'version' => '3.0.0']);
             break;
         default:
             Response::error('Recurso no encontrado', 404);

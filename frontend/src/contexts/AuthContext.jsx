@@ -48,16 +48,23 @@ export function AuthProvider({ children }) {
   };
 
   const completeOnboarding = async () => {
-    // 1. Persistir en localStorage de inmediato (no depende de la red)
     if (user?.id) localStorage.setItem(lsKey(user.id), '1');
-    // 2. Actualizar estado local
     setUser(prev => prev ? { ...prev, onboarding_completado: true } : null);
-    // 3. Persistir en DB (best-effort, el me() ya lee fresco de DB de todos modos)
     try { await api.completeOnboarding(); } catch { /* ignorar */ }
   };
 
+  const upgradePlan = async () => {
+    await api.upgradePlan();
+    setUser(prev => prev ? { ...prev, plan: 'premium' } : null);
+  };
+
+  const downgradePlan = async () => {
+    await api.downgradePlan();
+    setUser(prev => prev ? { ...prev, plan: 'free' } : null);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, completeOnboarding }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, completeOnboarding, upgradePlan, downgradePlan }}>
       {children}
     </AuthContext.Provider>
   );

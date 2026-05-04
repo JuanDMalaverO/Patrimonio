@@ -1,5 +1,6 @@
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { Sparkles } from 'lucide-react';
 import {
   BarChart2, TrendingUp, Wallet, Target, Tags,
   ArrowLeftRight, ArrowRight, CheckCircle,
@@ -208,6 +209,10 @@ export default function Landing() {
             <a href="#como-funciona" className="text-sm text-ink/55 hover:text-ink transition-colors tracking-wide">
               Cómo funciona
             </a>
+            <a href="#suscripciones" className="text-sm text-ink/55 hover:text-ink transition-colors tracking-wide flex items-center gap-1">
+              <Sparkles size={11} className="text-gold" strokeWidth={2} />
+              Precios
+            </a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -394,6 +399,84 @@ export default function Landing() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      {/* ── SUSCRIPCIONES ──────────────────────────────────────────────────── */}
+      <section id="suscripciones" className="border-t border-ink/10">
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <div className="mb-14 text-center">
+            <div className="eyebrow mb-3">Suscripciones</div>
+            <h2 className="font-display text-4xl tracking-tightest max-w-lg mx-auto leading-[1.08]">
+              Empieza gratis. Escala cuando lo necesites.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+
+            {/* FREE */}
+            <div className="card p-8 flex flex-col">
+              <div className="mb-6">
+                <div className="eyebrow mb-2">Plan Free</div>
+                <div className="font-display text-5xl tracking-tightest leading-none">$0</div>
+                <p className="text-sm text-ink/45 mt-1">Para siempre</p>
+              </div>
+              <ul className="space-y-3 flex-1 mb-8">
+                {[
+                  'Dashboard de patrimonio neto',
+                  'Cuentas con saldo dinámico y TEA',
+                  'Historial de movimientos ilimitado',
+                  'Presupuestos por categoría',
+                  'Categorías personalizadas',
+                ].map(item => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-ink/70">
+                    <span className="w-1 h-1 rounded-full bg-sage flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/register" className="btn-ghost w-full justify-center py-2.5">
+                Comenzar gratis
+              </Link>
+            </div>
+
+            {/* PREMIUM */}
+            <div className="bg-ink text-paper rounded-sm p-8 flex flex-col relative overflow-hidden">
+              {/* Watermark decorativo */}
+              <div className="absolute -right-4 -bottom-8 font-display text-[120px] leading-none text-paper/[0.04] select-none pointer-events-none" aria-hidden>
+                ✦
+              </div>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-paper/40 font-medium">Plan Premium</div>
+                  <Sparkles size={11} className="text-gold" strokeWidth={2} />
+                </div>
+                <div className="font-display text-5xl tracking-tightest leading-none text-paper">$15.000</div>
+                <p className="text-sm text-paper/40 mt-1">COP / mes</p>
+              </div>
+
+              <div className="w-full h-px bg-paper/10 my-6" />
+
+              <p className="text-xs text-paper/40 uppercase tracking-wider mb-3">Todo lo de Free, más:</p>
+              <ul className="space-y-3 flex-1 mb-8">
+                {[
+                  ['Análisis financiero con IA',          true],
+                  ['Patrones de gasto detectados',        true],
+                  ['Recomendaciones accionables y cuantificadas', true],
+                  ['Score financiero mensual (0–100)',    true],
+                  ['Proyecciones de impacto futuro',      true],
+                ].map(([item, gold]) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-paper/80">
+                    <Sparkles size={11} className={gold ? 'text-gold flex-shrink-0' : 'text-paper/30 flex-shrink-0'} strokeWidth={2} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link to="/register" className="inline-flex items-center justify-center gap-2 bg-paper text-ink px-4 py-2.5 text-sm font-medium tracking-wide hover:bg-bone transition-colors rounded-sm">
+                <Sparkles size={13} className="text-gold" /> Activar Premium
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

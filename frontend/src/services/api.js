@@ -25,6 +25,14 @@ export const api = {
   logout:              ()     => request('/auth/logout',     { method: 'POST' }),
   completeOnboarding:  ()     => request('/auth/onboarding', { method: 'POST' }),
 
+  // ── Suscripción ────────────────────────────────────────────────────────────
+  upgradePlan:   () => request('/subscription/upgrade',   { method: 'POST' }),
+  downgradePlan: () => request('/subscription/downgrade', { method: 'POST' }),
+
+  // ── IA ─────────────────────────────────────────────────────────────────────
+  getInsights:     (periodo) => request(`/ai/insights?periodo=${periodo}`),
+  refreshInsights: (periodo) => request(`/ai/refresh?periodo=${periodo}`, { method: 'POST' }),
+
   // ── Cuentas ────────────────────────────────────────────────────────────────
   getCuentas:    ()         => request('/cuentas'),
   createCuenta:  (body)     => request('/cuentas',     { method: 'POST',   body: JSON.stringify(body) }),

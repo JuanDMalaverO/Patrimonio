@@ -28,8 +28,9 @@ CREATE TABLE usuarios (
     is_verified BOOLEAN DEFAULT FALSE,
     role ENUM('user', 'admin', 'editor') DEFAULT 'user',
 
-    -- Onboarding
+    -- Onboarding y plan
     onboarding_completado TINYINT(1) DEFAULT 0,
+    plan ENUM('free', 'premium') DEFAULT 'free',
 
     -- Trazabilidad
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -140,6 +141,20 @@ CREATE TABLE presupuestos (
     
     UNIQUE KEY uq_presupuesto_usuario (usuario_id, categoria_id, periodo),
     CHECK (monto_limite > 0)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- 7. Insights IA (caché de análisis generados)
+-- -----------------------------------------------------
+CREATE TABLE ai_insights (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BINARY(16) NOT NULL,
+    periodo CHAR(7) NOT NULL,
+    contenido JSON NOT NULL,
+    generado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_ai_usuario_periodo (usuario_id, periodo)
 ) ENGINE=InnoDB;
 
 -- =====================================================

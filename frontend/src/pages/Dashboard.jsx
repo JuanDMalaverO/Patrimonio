@@ -4,6 +4,7 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus } from 'lucide-r
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import OnboardingTutorial from '../components/OnboardingTutorial.jsx';
+import AiInsights from '../components/AiInsights.jsx';
 import {
   AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, YAxis
 } from 'recharts';
@@ -185,6 +186,9 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* IA INSIGHTS — premium arriba del fold, free con teaser bloqueado */}
+        <AiInsights periodo={periodo} />
 
         {/* TOP CATEGORÍAS */}
         <section className="card-elevated p-8">
