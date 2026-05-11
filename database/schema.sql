@@ -2,9 +2,9 @@
 -- Sistema de Finanzas Personales - Esquema MySQL Pro
 -- =====================================================
 
-DROP DATABASE IF EXISTS finanzas_personales;
-CREATE DATABASE finanzas_personales CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE finanzas_personales;
+-- DROP DATABASE IF EXISTS finanzas_personales;
+-- CREATE DATABASE finanzas_personales CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE u907103010_patrimony;
 
 -- -----------------------------------------------------
 -- 1. Usuarios (UUID, Auditoría, Roles)
@@ -156,6 +156,22 @@ CREATE TABLE ai_insights (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     INDEX idx_ai_usuario_periodo (usuario_id, periodo)
 ) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- 8. Verificaciones de email (OTP para registro)
+-- -----------------------------------------------------
+CREATE TABLE email_verificaciones (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    email      VARCHAR(255)    NOT NULL,
+    codigo     CHAR(6)         NOT NULL,
+    expires_at TIMESTAMP       NOT NULL,
+    intentos   TINYINT UNSIGNED DEFAULT 0 COMMENT 'Máx 5 intentos antes de invalidar',
+    usado      TINYINT(1)      DEFAULT 0  COMMENT '1 = ya fue consumido por register()',
+    created_at TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_ev_email   (email),
+    INDEX idx_ev_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
 -- DATOS SEMILLA (Adaptados para soportar UUID)

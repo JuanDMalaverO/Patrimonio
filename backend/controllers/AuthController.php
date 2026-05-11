@@ -17,6 +17,8 @@ class AuthController {
 
     public function handle(string $method, ?string $action): void {
         match ([$method, $action]) {
+            ['POST', 'send-code']  => $this->sendCode(),
+            ['POST', 'verify-code']=> $this->verifyCode(),
             ['POST', 'register']   => $this->register(),
             ['POST', 'login']      => $this->login(),
             ['POST', 'logout']     => $this->logout(),
@@ -30,13 +32,68 @@ class AuthController {
 
     // ── Endpoints ─────────────────────────────────────────────────────────────
 
+    private function sendCode(): void {
+        $b     = Response::getBody();
+        $email = strtolower(trim($b['email'] ?? ''));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Response::error('El email no tiene un formato válido', 422);
+        }
+
+        // ¿Ya está registrado?
+        $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            Response::error('Este email ya tiene una cuenta. Inicia sesión.', 409);
+        }
+
+        // Rate limit: impedir re-envío antes de 60 segundos
+        $stmt = $this->db->prepare("
+            SELECT id FROM email_verificaciones
+            WHERE email = ? AND created_at > DATE_SUB(NOW(), INTERVAL 60 SECOND)
+            ORDER BY created_at DESC LIMIT 1
+        ");
+        $stmt->execute([$email]);
+        if ($stmt->fetch()) {
+            Response::error('Ya enviamos un código recientemente. Espera un momento antes de solicitar otro.', 429);
+        }
+
+        // Limpiar códigos expirados o usados de este email
+        $this->db->prepare("DELETE FROM email_verificaciones WHERE email = ? AND (expires_at < NOW() OR usado = 1)")
+                 ->execute([$email]);
+
+        // Generar y guardar código
+        $codigo    = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = date('Y-m-d H:i:s', time() + 900); // 15 minutos
+
+        $this->db->prepare("INSERT INTO email_verificaciones (email, codigo, expires_at) VALUES (?, ?, ?)")
+                 ->execute([$email, $codigo, $expiresAt]);
+
+        // Enviar email
+        if (!MailService::enviarCodigo($email, $codigo)) {
+            Response::error('No se pudo enviar el email. Verifica la dirección o intenta más tarde.', 503);
+        }
+
+        Response::json(['mensaje' => 'Código enviado. Revisa tu bandeja de entrada (y spam).']);
+    }
+
+    private function verifyCode(): void {
+        $b      = Response::getBody();
+        $email  = strtolower(trim($b['email'] ?? ''));
+        $codigo = trim($b['codigo'] ?? '');
+
+        $resultado = $this->validarCodigo($email, $codigo, false);
+        Response::json(['valido' => $resultado]);
+    }
+
     private function register(): void {
         $b = Response::getBody();
-        Response::require($b, ['nombre_completo', 'email', 'password']);
+        Response::require($b, ['nombre_completo', 'email', 'password', 'codigo']);
 
         $email  = strtolower(trim($b['email']));
         $nombre = trim($b['nombre_completo']);
         $pass   = $b['password'];
+        $codigo = trim($b['codigo']);
         $terms  = !empty($b['accepted_terms']);
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -59,18 +116,20 @@ class AuthController {
             Response::error('Este email ya está registrado', 409);
         }
 
-        // Generar UUID binario via MySQL
+        // Validar código y marcarlo como usado
+        if (!$this->validarCodigo($email, $codigo, true)) {
+            Response::error('El código de verificación es incorrecto o ha expirado.', 422);
+        }
+
+        // Crear usuario
         $binaryId = $this->generateUUID();
+        $hash     = password_hash($pass, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
 
-        $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
-
-        $stmt = $this->db->prepare("
+        $this->db->prepare("
             INSERT INTO usuarios (id, email, password_hash, nombre_completo, accepted_terms, terms_accepted_at, terms_version)
             VALUES (?, ?, ?, ?, 1, NOW(), '1.0')
-        ");
-        $stmt->execute([$binaryId, $email, $hash, $nombre]);
+        ")->execute([$binaryId, $email, $hash, $nombre]);
 
-        // Nuevo usuario: onboarding pendiente
         $usuario = $this->buildPayload($binaryId, $email, $nombre, 'user', false);
         $this->createSession($binaryId, $usuario);
 
@@ -225,6 +284,44 @@ class AuthController {
             'samesite' => 'Lax',
             'secure'   => $secure,
         ]);
+    }
+
+    /**
+     * Valida un código OTP contra email_verificaciones.
+     * Si $marcarUsado = true y el código es correcto, lo marca como consumido.
+     * Incrementa el contador de intentos fallidos para limitar fuerza bruta.
+     */
+    private function validarCodigo(string $email, string $codigo, bool $marcarUsado): bool {
+        // Solo aceptamos exactamente 6 dígitos
+        if (!preg_match('/^\d{6}$/', $codigo)) return false;
+
+        $stmt = $this->db->prepare("
+            SELECT id, codigo, intentos
+            FROM email_verificaciones
+            WHERE email = ? AND usado = 0 AND expires_at > NOW()
+            ORDER BY created_at DESC LIMIT 1
+        ");
+        $stmt->execute([$email]);
+        $row = $stmt->fetch();
+
+        if (!$row) return false;
+
+        // Bloquear tras 5 intentos fallidos
+        if ((int)$row['intentos'] >= 5) return false;
+
+        // Comparación en tiempo constante para evitar timing attacks
+        if (!hash_equals($row['codigo'], $codigo)) {
+            $this->db->prepare("UPDATE email_verificaciones SET intentos = intentos + 1 WHERE id = ?")
+                     ->execute([$row['id']]);
+            return false;
+        }
+
+        if ($marcarUsado) {
+            $this->db->prepare("UPDATE email_verificaciones SET usado = 1 WHERE id = ?")
+                     ->execute([$row['id']]);
+        }
+
+        return true;
     }
 
     private function generateUUID(): string {

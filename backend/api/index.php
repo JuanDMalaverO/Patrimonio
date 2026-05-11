@@ -23,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ── Dependencias ──────────────────────────────────────────────────────────────
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/ai.php';
+require_once __DIR__ . '/../config/mail.php';
+require_once __DIR__ . '/../services/MailService.php';
 require_once __DIR__ . '/../utils/response.php';
 require_once __DIR__ . '/../controllers/AuthController.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';

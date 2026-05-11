@@ -20,10 +20,12 @@ async function request(path, options = {}) {
 export const api = {
   // ── Autenticación ──────────────────────────────────────────────────────────
   me:                  ()     => request('/auth/me'),
-  login:               (body) => request('/auth/login',      { method: 'POST', body: JSON.stringify(body) }),
-  register:            (body) => request('/auth/register',   { method: 'POST', body: JSON.stringify(body) }),
-  logout:              ()     => request('/auth/logout',     { method: 'POST' }),
-  completeOnboarding:  ()     => request('/auth/onboarding', { method: 'POST' }),
+  sendCode:            (body) => request('/auth/send-code',   { method: 'POST', body: JSON.stringify(body) }),
+  verifyCode:          (body) => request('/auth/verify-code', { method: 'POST', body: JSON.stringify(body) }),
+  login:               (body) => request('/auth/login',       { method: 'POST', body: JSON.stringify(body) }),
+  register:            (body) => request('/auth/register',    { method: 'POST', body: JSON.stringify(body) }),
+  logout:              ()     => request('/auth/logout',      { method: 'POST' }),
+  completeOnboarding:  ()     => request('/auth/onboarding',  { method: 'POST' }),
 
   // ── Perfil ─────────────────────────────────────────────────────────────────
   updateProfile:  (body) => request('/auth/profile',  { method: 'PUT', body: JSON.stringify(body) }),

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'chore: add .gitignore to protect API keys and exclude node_modules *)",
+      "Bash(git commit -m 'feat: AI financial insights + subscription system \\(Free/Premium\\) *)",
+      "Bash(git reset *)"
+    ]
+  }
+}
