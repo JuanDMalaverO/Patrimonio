@@ -274,10 +274,12 @@ class AuthController {
         return $this->cachedPayload;
     }
 
-    /** Retorna el plan del usuario desde el payload cacheado. */
+    /** Retorna el plan leyendo siempre desde la DB — el payload de sesión puede estar desactualizado si el plan fue cambiado manualmente. */
     public function getUserPlan(): string {
-        $payload = $this->resolveSessionPayload();
-        return $payload['user']['plan'] ?? 'free';
+        $stmt = $this->db->prepare("SELECT plan FROM usuarios WHERE id = ?");
+        $stmt->execute([USER_ID]);
+        $row = $stmt->fetch();
+        return $row['plan'] ?? 'free';
     }
 
     private function createSession(string $binaryId, array $usuario): void {
