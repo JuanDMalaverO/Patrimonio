@@ -4,7 +4,9 @@ import { Plus, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { api } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
+import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 const COLORES = [
   '#1f2937', '#15803d', '#b91c1c', '#c2410c', '#a88a3a',
@@ -16,6 +18,7 @@ export default function Categorias() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [modal, setModal] = useState(false);
+  const tutorial = useTutorial();
 
   const load = () => {
     setLoading(true);
@@ -32,6 +35,14 @@ export default function Categorias() {
     load();
   };
 
+  const handleSaved = () => {
+    setModal(false);
+    load();
+    if (tutorial?.active && tutorial?.step === 1) {
+      setTimeout(() => tutorial.completeStep(1), 800);
+    }
+  };
+
   const ingresos = cats.filter(c => c.tipo === 'ingreso');
   const egresos = cats.filter(c => c.tipo === 'egreso');
 
@@ -45,6 +56,24 @@ export default function Categorias() {
           <button onClick={() => setModal(true)} className="btn-primary">
             <Plus size={16} strokeWidth={1.5} />
             Nueva categoría
+          </button>
+        }
+      />
+
+      {/* ── Guía interactiva (solo visible en paso 1 del tutorial) ───────── */}
+      <TutorialGuide
+        stepIndex={1}
+        title="Explora y crea una categoría"
+        description="Ya tienes 16 categorías colombianas cargadas automáticamente. Revísalas — cubren los gastos más comunes. Si necesitas una personalizada, créala ahora."
+        tips={[
+          'Ya tienes: <b>Alimentación, Transporte, Arriendo, Salud, Entretenimiento</b> y más',
+          '<b>Tipo Egreso</b> = gastos que salen de tu bolsillo · <b>Tipo Ingreso</b> = plata que entra',
+          'El <b>color</b> aparecerá en gráficas y reportes — escoge uno que identifiques fácilmente',
+          '¿Todo bien? Crea una categoría extra o simplemente avanza al siguiente paso',
+        ]}
+        action={
+          <button onClick={() => setModal(true)} className="btn-primary gap-2">
+            <Plus size={15} strokeWidth={2} /> Crear categoría personalizada
           </button>
         }
       />
@@ -76,7 +105,7 @@ export default function Categorias() {
       <CategoriaModal
         open={modal}
         onClose={() => setModal(false)}
-        onSaved={() => { setModal(false); load(); }}
+        onSaved={handleSaved}
       />
     </>
   );

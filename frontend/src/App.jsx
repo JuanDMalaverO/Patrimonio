@@ -2,6 +2,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
+import { TutorialProvider } from './contexts/TutorialContext.jsx';
+import TutorialBar from './components/TutorialBar.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
@@ -14,20 +16,24 @@ import Presupuestos from './pages/Presupuestos';
 import Categorias from './pages/Categorias';
 import Configuracion from './pages/Configuracion';
 
+// Rutas protegidas con tutorial activo
 function AppShell() {
   return (
     <ProtectedRoute>
-      <Layout>
-        <Routes>
-          <Route path="/dashboard"     element={<Dashboard />} />
-          <Route path="/cuentas"       element={<Cuentas />} />
-          <Route path="/transacciones" element={<Transacciones />} />
-          <Route path="/presupuestos"  element={<Presupuestos />} />
-          <Route path="/categorias"    element={<Categorias />} />
-          <Route path="/configuracion" element={<Configuracion />} />
-          <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Layout>
+      <TutorialProvider>
+        <TutorialBar />
+        <Layout>
+          <Routes>
+            <Route path="/dashboard"     element={<Dashboard />} />
+            <Route path="/cuentas"       element={<Cuentas />} />
+            <Route path="/transacciones" element={<Transacciones />} />
+            <Route path="/presupuestos"  element={<Presupuestos />} />
+            <Route path="/categorias"    element={<Categorias />} />
+            <Route path="/configuracion" element={<Configuracion />} />
+            <Route path="*"              element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Layout>
+      </TutorialProvider>
     </ProtectedRoute>
   );
 }

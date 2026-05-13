@@ -457,7 +457,8 @@ export default function Register() {
     setStep('verify');
   };
 
-  const handleRegistered = () => navigate('/dashboard', { replace: true });
+  // Después de registrarse → ir directamente a Cuentas para iniciar el tutorial
+  const handleRegistered = () => navigate('/cuentas', { replace: true });
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">

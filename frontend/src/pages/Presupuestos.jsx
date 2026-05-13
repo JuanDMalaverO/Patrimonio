@@ -5,7 +5,9 @@ import { api } from '../services/api';
 import { formatCOP, currentPeriod, periodLabel } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
+import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 const ESTADO_STYLES = {
   normal:   { color: '#5a6b58', bg: 'bg-sage',  label: 'En rango',  icon: CheckCircle2 },
@@ -20,6 +22,7 @@ export default function Presupuestos() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [modal, setModal] = useState(false);
+  const tutorial = useTutorial();
 
   const load = async () => {
     setLoading(true);
@@ -41,6 +44,14 @@ export default function Presupuestos() {
     load();
   };
 
+  const handleSaved = () => {
+    setModal(false);
+    load();
+    if (tutorial?.active && tutorial?.step === 3) {
+      setTimeout(() => tutorial.completeStep(3), 800);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -60,6 +71,24 @@ export default function Presupuestos() {
               Nuevo presupuesto
             </button>
           </div>
+        }
+      />
+
+      {/* ── Guía interactiva (solo visible en paso 3 del tutorial) ───────── */}
+      <TutorialGuide
+        stepIndex={3}
+        title="Define tu primer presupuesto"
+        description="Un presupuesto es un límite mensual para una categoría de gasto. Cuando te acerques al límite, Patrimonio te avisa. Empieza por tu gasto más grande."
+        tips={[
+          'Elige la <b>categoría</b> donde más gastas — Alimentación, Transporte o Arriendo son buenos candidatos',
+          'Pon un <b>límite realista</b>: revisa cuánto gastaste el mes pasado y ajusta un 10% menos',
+          'El sistema muestra <b>alertas</b> cuando superas el 80% y marca en rojo cuando te pasas',
+          'Puedes crear presupuestos para <b>diferentes meses</b> con el selector de periodo',
+        ]}
+        action={
+          <button onClick={() => setModal(true)} className="btn-primary gap-2">
+            <Plus size={15} strokeWidth={2} /> Crear mi primer presupuesto
+          </button>
         }
       />
 
@@ -160,7 +189,7 @@ export default function Presupuestos() {
         onClose={() => setModal(false)}
         categorias={categorias}
         periodo={periodo}
-        onSaved={() => { setModal(false); load(); }}
+        onSaved={handleSaved}
       />
     </>
   );

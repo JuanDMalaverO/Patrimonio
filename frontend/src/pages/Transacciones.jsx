@@ -6,7 +6,9 @@ import { api } from '../services/api';
 import { formatCOP, formatDate } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
+import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 const TIPO_META = {
   ingreso:        { label: 'Ingreso',       icon: ArrowDownLeft,  color: 'sage', sign: '+' },
@@ -24,6 +26,7 @@ export default function Transacciones() {
   const [err, setErr] = useState(null);
   const [filtro, setFiltro] = useState('todos');
   const [modal, setModal] = useState(false); // Se abre sólo si hay cuentas
+  const tutorial = useTutorial();
 
   const load = async () => {
     setLoading(true);
@@ -54,6 +57,14 @@ export default function Transacciones() {
     if (!confirm('¿Eliminar esta transacción?')) return;
     await api.deleteTransaccion(id);
     load();
+  };
+
+  const handleSaved = () => {
+    setModal(false);
+    load();
+    if (tutorial?.active && tutorial?.step === 2) {
+      setTimeout(() => tutorial.completeStep(2), 800);
+    }
   };
 
   const filtradas = useMemo(() => {
@@ -90,6 +101,26 @@ export default function Transacciones() {
             <button onClick={abrirModal} className="btn-primary">
               <Plus size={16} strokeWidth={1.5} />
               Nuevo movimiento
+            </button>
+          )
+        }
+      />
+
+      {/* ── Guía interactiva (solo visible en paso 2 del tutorial) ───────── */}
+      <TutorialGuide
+        stepIndex={2}
+        title="Registra tu primer movimiento"
+        description="Anota el ingreso o gasto más reciente que recuerdes. No tiene que ser perfecto — lo importante es empezar a registrar tu flujo de dinero."
+        tips={[
+          '<b>Egreso</b> = plata que sale · <b>Ingreso</b> = plata que entra · <b>Transferencia</b> = mover entre tus cuentas',
+          'Selecciona la <b>cuenta</b> desde donde salió o entró el dinero',
+          'Elige la <b>categoría</b> correcta — esto alimentará tus presupuestos y gráficas',
+          'La <b>descripción</b> es opcional pero te ayuda a recordar el detalle del gasto',
+        ]}
+        action={
+          !sinCuentas && (
+            <button onClick={() => setModal(true)} className="btn-primary gap-2">
+              <Plus size={15} strokeWidth={2} /> Registrar mi primer movimiento
             </button>
           )
         }
@@ -212,7 +243,7 @@ export default function Transacciones() {
         onClose={() => { setModal(false); params.delete('nuevo'); setParams(params); }}
         cuentas={cuentas}
         categorias={categorias}
-        onSaved={() => { setModal(false); load(); }}
+        onSaved={handleSaved}
       />
     </>
   );

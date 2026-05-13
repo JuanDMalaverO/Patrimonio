@@ -1,6 +1,18 @@
 RewriteEngine On
 RewriteBase /
+
+# ── Seguridad: bloquear acceso directo a directorios sensibles ────────────────
+RewriteRule ^backend/config/ - [F,L]
+
+# ── Forzar HTTPS ──────────────────────────────────────────────────────────────
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ── API: redirigir /api/* al router PHP ──────────────────────────────────────
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^api(/.*)?$ backend/api/index.php [QSA,L]
+
+# ── SPA: todo lo demás → index.html (React Router se encarga) ────────────────
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ backend/api/index.php [QSA,L]
-RewriteRule ^api/?$ backend/api/index.php [QSA,L]
+RewriteRule ^ index.html [L]

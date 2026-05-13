@@ -130,10 +130,43 @@ class AuthController {
             VALUES (?, ?, ?, ?, 1, NOW(), '1.0')
         ")->execute([$binaryId, $email, $hash, $nombre]);
 
+        // Crear categorías colombianas por defecto para el usuario nuevo
+        $this->createDefaultCategories($binaryId);
+
         $usuario = $this->buildPayload($binaryId, $email, $nombre, 'user', false);
         $this->createSession($binaryId, $usuario);
 
         Response::json(['usuario' => $usuario, 'mensaje' => 'Cuenta creada'], 201);
+    }
+
+    private function createDefaultCategories(string $binaryId): void {
+        $stmt = $this->db->prepare(
+            "INSERT IGNORE INTO categorias (usuario_id, nombre, tipo, color) VALUES (?, ?, ?, ?)"
+        );
+        $categorias = [
+            // ── Egresos (los más comunes en Colombia) ──────────────────────
+            ['Alimentación',        'egreso',  '#15803d'],
+            ['Transporte',          'egreso',  '#b91c1c'],
+            ['Arriendo / Vivienda', 'egreso',  '#1f2937'],
+            ['Servicios del hogar', 'egreso',  '#0891b2'],
+            ['Salud',               'egreso',  '#dc2626'],
+            ['Entretenimiento',     'egreso',  '#7c3aed'],
+            ['Ropa y calzado',      'egreso',  '#db2777'],
+            ['Educación',           'egreso',  '#0f766e'],
+            ['Restaurantes',        'egreso',  '#b45309'],
+            ['Tecnología',          'egreso',  '#1d4ed8'],
+            ['Mascotas',            'egreso',  '#92400e'],
+            ['Otros gastos',        'egreso',  '#6b7280'],
+            // ── Ingresos ────────────────────────────────────────────────────
+            ['Salario / Nómina',    'ingreso', '#15803d'],
+            ['Freelance',           'ingreso', '#059669'],
+            ['Inversiones',         'ingreso', '#0284c7'],
+            ['Otros ingresos',      'ingreso', '#6b7280'],
+        ];
+        foreach ($categorias as [$nombre, $tipo, $color]) {
+            try { $stmt->execute([$binaryId, $nombre, $tipo, $color]); }
+            catch (\Throwable) { /* ignorar si ya existe */ }
+        }
     }
 
     private function login(): void {

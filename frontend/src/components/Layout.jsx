@@ -6,6 +6,7 @@ import {
   LogOut, Sparkles, Settings, Menu, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 const NAV = [
   { to: '/dashboard',     label: 'Resumen',      icon: LayoutDashboard, num: '01' },
@@ -98,6 +99,7 @@ function SidebarContent({ onNavClick }) {
 export default function Layout({ children }) {
   const location          = useLocation();
   const [open, setOpen]   = useState(false);
+  const { active }        = useTutorial();
 
   return (
     <div className="min-h-screen flex bg-paper">
@@ -141,7 +143,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* Contenido principal */}
-        <main className="flex-1 min-w-0">
+        <main className={`flex-1 min-w-0 ${active ? 'pb-20' : ''}`}>
           <div key={location.pathname} className="animate-fade-up">
             {children}
           </div>

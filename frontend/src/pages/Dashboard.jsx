@@ -1,9 +1,10 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
-import OnboardingTutorial from '../components/OnboardingTutorial.jsx';
+import TutorialGuide from '../components/TutorialGuide.jsx';
+import { useTutorial } from '../contexts/TutorialContext.jsx';
 import AiInsights from '../components/AiInsights.jsx';
 import {
   AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, YAxis
@@ -19,8 +20,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const tutorial = useTutorial();
   const periodo = currentPeriod();
-  const mostrarTutorial = user && !user.onboarding_completado;
 
   useEffect(() => {
     setLoading(true);
@@ -39,7 +40,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {mostrarTutorial && <OnboardingTutorial />}
       <PageHeader
         eyebrow={`Periodo · ${periodLabel(periodo)}`}
         title="Resumen"
@@ -48,6 +48,27 @@ export default function Dashboard() {
           <button onClick={() => navigate('/transacciones?nuevo=1')} className="btn-primary">
             <Plus size={16} strokeWidth={1.5} />
             Registrar movimiento
+          </button>
+        }
+      />
+
+      {/* ── Guía interactiva (solo visible en paso 4 del tutorial) ───────── */}
+      <TutorialGuide
+        stepIndex={4}
+        title="¡Tu resumen financiero está listo!"
+        description="Este es el panel central de Patrimonio. Aquí ves en tiempo real tu patrimonio neto, el flujo del mes, los análisis de IA y la distribución de gastos."
+        tips={[
+          '<b>Patrimonio neto</b> = suma de todas tus cuentas (incluidas tarjetas de crédito negativas)',
+          '<b>Flujo del mes</b> = ingresos vs egresos del periodo actual con tu tasa de ahorro',
+          '<b>Análisis IA</b> detecta alertas, oportunidades y califica tu salud financiera (plan Premium)',
+          '<b>Top categorías</b> muestra dónde se va la mayoría de tu dinero cada mes',
+        ]}
+        action={
+          <button
+            onClick={() => tutorial.completeStep(4)}
+            className="btn-primary gap-2"
+          >
+            <CheckCircle2 size={15} strokeWidth={2} /> Completar tutorial
           </button>
         }
       />
