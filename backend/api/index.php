@@ -33,6 +33,7 @@ require_once __DIR__ . '/../controllers/CuentasController.php';
 require_once __DIR__ . '/../controllers/CategoriasController.php';
 require_once __DIR__ . '/../controllers/TransaccionesController.php';
 require_once __DIR__ . '/../controllers/PresupuestosController.php';
+require_once __DIR__ . '/../controllers/MetasController.php';
 require_once __DIR__ . '/../controllers/DashboardController.php';
 
 $db = (new Database())->connect();
@@ -77,6 +78,9 @@ try {
             break;
         case 'presupuestos':
             (new PresupuestosController($db))->handle($method, $id);
+            break;
+        case 'metas':
+            (new MetasController($db))->handle($method, $id);
             break;
         case 'dashboard':
             (new DashboardController($db))->handle($method);

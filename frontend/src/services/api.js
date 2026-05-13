@@ -63,6 +63,13 @@ export const api = {
   createPresupuesto:  (body)    => request('/presupuestos',     { method: 'POST',   body: JSON.stringify(body) }),
   deletePresupuesto:  (id)      => request(`/presupuestos/${id}`, { method: 'DELETE' }),
 
+  // ── Metas de ahorro ────────────────────────────────────────────────────────
+  getMetas:    ()          => request('/metas'),
+  createMeta:  (body)      => request('/metas',       { method: 'POST',   body: JSON.stringify(body) }),
+  updateMeta:  (id, body)  => request(`/metas/${id}`, { method: 'PUT',    body: JSON.stringify(body) }),
+  aportarMeta: (id, monto) => request(`/metas/${id}`, { method: 'PUT',    body: JSON.stringify({ aportar: monto }) }),
+  deleteMeta:  (id)        => request(`/metas/${id}`, { method: 'DELETE' }),
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
   getDashboard: (periodo) => request(`/dashboard${periodo ? `?periodo=${periodo}` : ''}`),
 };

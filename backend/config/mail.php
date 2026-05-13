@@ -9,5 +9,5 @@
 // y crea: noreply@tudominio.com
 // ─────────────────────────────────────────────────────────────────────────────
 
-define('MAIL_FROM',      'noreply@tudominio.com');   // ← CAMBIAR por tu email real
+define('MAIL_FROM',      'patrimony@mypatrimony.com');   // ← CAMBIAR por tu email real
 define('MAIL_FROM_NAME', 'Patrimonio');

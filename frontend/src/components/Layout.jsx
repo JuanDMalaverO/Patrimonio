@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Wallet, ArrowLeftRight, Target, Tags,
+  LayoutDashboard, Wallet, ArrowLeftRight, Target, Tags, Flag,
   LogOut, Sparkles, Settings, Menu, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
@@ -13,8 +13,9 @@ const NAV = [
   { to: '/cuentas',       label: 'Cuentas',      icon: Wallet,          num: '02' },
   { to: '/transacciones', label: 'Movimientos',  icon: ArrowLeftRight,  num: '03' },
   { to: '/presupuestos',  label: 'Presupuestos', icon: Target,          num: '04' },
-  { to: '/categorias',    label: 'Categorías',   icon: Tags,            num: '05' },
-  { to: '/configuracion', label: 'Configuración',icon: Settings,        num: '06' },
+  { to: '/metas',         label: 'Metas',        icon: Flag,            num: '05' },
+  { to: '/categorias',    label: 'Categorías',   icon: Tags,            num: '06' },
+  { to: '/configuracion', label: 'Configuración',icon: Settings,        num: '07' },
 ];
 
 function SidebarContent({ onNavClick }) {

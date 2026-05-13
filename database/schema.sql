@@ -173,6 +173,25 @@ CREATE TABLE email_verificaciones (
     INDEX idx_ev_expires (expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- -----------------------------------------------------
+-- 9. Metas de ahorro
+-- -----------------------------------------------------
+CREATE TABLE metas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id BINARY(16) NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    icono VARCHAR(30) NOT NULL DEFAULT 'star',
+    color VARCHAR(7) NOT NULL DEFAULT '#15803d',
+    monto_objetivo DECIMAL(15,2) NOT NULL,
+    monto_actual DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    fecha_objetivo DATE NULL,
+    estado ENUM('activa','completada','pausada') NOT NULL DEFAULT 'activa',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_metas_usuario (usuario_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =====================================================
 -- DATOS SEMILLA (Adaptados para soportar UUID)
 -- =====================================================

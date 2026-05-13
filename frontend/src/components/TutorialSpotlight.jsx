@@ -8,12 +8,12 @@ import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
   X, ArrowRight, CheckCircle2,
-  Wallet, Tags, ArrowLeftRight, Target, LayoutDashboard,
+  Wallet, Tags, ArrowLeftRight, Target, Flag, LayoutDashboard,
 } from 'lucide-react';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 // Icon per step index
-const STEP_ICONS = [Wallet, Tags, ArrowLeftRight, Target, LayoutDashboard];
+const STEP_ICONS = [Wallet, Tags, ArrowLeftRight, Target, Flag, LayoutDashboard];
 
 const PAD        = 10;
 const OVERLAY_Z  = 45;

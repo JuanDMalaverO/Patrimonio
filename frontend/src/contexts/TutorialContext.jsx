@@ -76,6 +76,21 @@ export const TUTORIAL_STEPS = [
   },
   {
     index:          4,
+    path:           '/metas',
+    navLabel:       'Metas',
+    title:          'Crea tu primera meta de ahorro',
+    description:    'Haz clic en el botón resaltado para crear tu primera meta.',
+    targetSelector: '[data-tutorial="nueva-meta"]',
+    required:       true,
+    intro: {
+      achievement: '¡Presupuesto definido!',
+      headline:    'Definamos una meta de ahorro',
+      body:        'Una meta es un objetivo concreto: el fondo de emergencia, el viaje soñado, el equipo que quieres. Ponle nombre, monto y fecha para saber cuánto ahorrar cada mes.',
+      cta:         'Crear mi primera meta',
+    },
+  },
+  {
+    index:          5,
     path:           '/dashboard',
     navLabel:       'Resumen',
     title:          '¡Tu panorama financiero!',
@@ -84,7 +99,7 @@ export const TUTORIAL_STEPS = [
     required:       false,
     ctaLabel:       'Completar tutorial',
     intro: {
-      achievement: '¡Presupuesto definido!',
+      achievement: '¡Meta creada!',
       headline:    'Veamos tu resumen financiero',
       body:        'En el dashboard verás tu patrimonio neto, flujo del mes, análisis con IA y distribución de gastos — todo en un solo vistazo.',
       cta:         'Ver mi resumen',

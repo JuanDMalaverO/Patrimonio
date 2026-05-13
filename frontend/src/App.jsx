@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import Cuentas from './pages/Cuentas';
 import Transacciones from './pages/Transacciones';
 import Presupuestos from './pages/Presupuestos';
+import Metas from './pages/Metas';
 import Categorias from './pages/Categorias';
 import Configuracion from './pages/Configuracion';
 
@@ -30,6 +31,7 @@ function AppShell() {
             <Route path="/cuentas"       element={<Cuentas />} />
             <Route path="/transacciones" element={<Transacciones />} />
             <Route path="/presupuestos"  element={<Presupuestos />} />
+            <Route path="/metas"         element={<Metas />} />
             <Route path="/categorias"    element={<Categorias />} />
             <Route path="/configuracion" element={<Configuracion />} />
             <Route path="*"              element={<Navigate to="/dashboard" replace />} />

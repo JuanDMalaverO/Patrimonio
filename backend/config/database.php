@@ -2,10 +2,10 @@
 // backend/config/database.php
 
 class Database {
-    private $host = 'localhost:3307';
-    private $db   = 'finanzas_personales';
-    private $user = 'root';
-    private $pass = '';
+    private $host = 'localhost';
+    private $db   = 'u907103010_patrimony';
+    private $user = 'u907103010_ceo';
+    private $pass = 'Juan3612*';
     private $charset = 'utf8mb4';
     private $pdo;
 
