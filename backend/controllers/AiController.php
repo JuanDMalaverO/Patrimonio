@@ -127,19 +127,15 @@ class AiController {
     private function buildContext(string $periodo): array {
         [$inicio, $fin] = $this->periodRange($periodo);
 
-        // Cuentas con saldo calculado
+        // Cuentas con saldo calculado (subconsultas correlacionadas — MySQL no soporta c.id en derived tables)
         $stmt = $this->db->prepare("
             SELECT c.tipo, c.tea_anual, c.nombre,
                 COALESCE(c.saldo_inicial,0)
-                + COALESCE((SELECT SUM(m) FROM (
-                    SELECT monto AS m FROM transacciones WHERE cuenta_id=c.id AND tipo='ingreso'
-                    UNION ALL
-                    SELECT -monto FROM transacciones WHERE cuenta_id=c.id AND tipo='egreso'
-                    UNION ALL
-                    SELECT monto FROM transacciones WHERE cuenta_destino_id=c.id AND tipo='transferencia'
-                    UNION ALL
-                    SELECT -monto FROM transacciones WHERE cuenta_id=c.id AND tipo='transferencia'
-                ) sub),0) AS saldo
+                + COALESCE((SELECT SUM(monto) FROM transacciones t WHERE t.cuenta_id=c.id AND t.tipo='ingreso'),0)
+                - COALESCE((SELECT SUM(monto) FROM transacciones t WHERE t.cuenta_id=c.id AND t.tipo='egreso'),0)
+                + COALESCE((SELECT SUM(monto) FROM transacciones t WHERE t.cuenta_destino_id=c.id AND t.tipo='transferencia'),0)
+                - COALESCE((SELECT SUM(monto) FROM transacciones t WHERE t.cuenta_id=c.id AND t.tipo='transferencia'),0)
+                AS saldo
             FROM cuentas c WHERE c.usuario_id=? AND c.activa=1
         ");
         $stmt->execute([USER_ID]);
@@ -358,7 +354,7 @@ PROMPT;
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        // curl_close deprecated since PHP 8.5 — handle freed automatically
 
         if ($response === false || $httpCode !== 200) {
             $err = json_decode((string)$response, true);
@@ -385,6 +381,7 @@ PROMPT;
         }
 
         Response::error('La IA devolvió una respuesta inesperada. Intenta de nuevo.', 503);
+        exit; // satisface el analizador — Response::error ya llama exit internamente
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
