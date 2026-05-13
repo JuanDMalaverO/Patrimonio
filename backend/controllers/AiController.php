@@ -5,7 +5,7 @@ class AiController {
     private PDO $db;
 
     private const MODEL            = 'claude-haiku-4-5-20251001';
-    private const MAX_TOKENS       = 1000;
+    private const MAX_TOKENS       = 1800;
     private const CACHE_HOURS      = 12;
     private const MAX_DAILY_CALLS  = 5;   // tope de llamadas reales a Claude por usuario/día
     private const MIN_REFRESH_MINS = 30;  // mínimo entre refreshes manuales
@@ -356,8 +356,15 @@ Insights rules:
             Response::error($msg, 503);
         }
 
-        $data = json_decode($response, true);
-        $text = trim($data['content'][0]['text'] ?? '');
+        $data       = json_decode($response, true);
+        $text       = trim($data['content'][0]['text'] ?? '');
+        $stopReason = $data['stop_reason'] ?? '';
+
+        // Si Claude truncó la respuesta por límite de tokens, avisar claramente
+        if ($stopReason === 'max_tokens') {
+            error_log('[Patrimonio AI] Respuesta truncada por max_tokens. Considera aumentar MAX_TOKENS.');
+            Response::error('La respuesta de la IA fue demasiado larga. Contacta al soporte.', 503);
+        }
 
         return $this->parseAndSanitize($text);
     }
