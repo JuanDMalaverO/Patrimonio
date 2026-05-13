@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext.jsx';
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { TutorialProvider } from './contexts/TutorialContext.jsx';
 import TutorialBar from './components/TutorialBar.jsx';
+import TutorialSpotlight from './components/TutorialSpotlight.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
@@ -22,6 +23,7 @@ function AppShell() {
     <ProtectedRoute>
       <TutorialProvider>
         <TutorialBar />
+        <TutorialSpotlight />
         <Layout>
           <Routes>
             <Route path="/dashboard"     element={<Dashboard />} />

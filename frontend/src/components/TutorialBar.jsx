@@ -14,6 +14,9 @@ export default function TutorialBar() {
   const current    = steps[step];
   const onThisPage = location.pathname === current.path;
 
+  // Spotlight handles the tutorial when on the correct page — bar only needed for navigation
+  if (onThisPage) return null;
+
   const bar = (
     <div
       // En desktop se desplaza a la derecha del sidebar (w-56 md / w-64 lg)

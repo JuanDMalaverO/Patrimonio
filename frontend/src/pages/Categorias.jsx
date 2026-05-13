@@ -4,7 +4,6 @@ import { Plus, Trash2, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { api } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
-import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -53,27 +52,9 @@ export default function Categorias() {
         title="Categorías"
         subtitle="Etiquetas que clasifican tus ingresos y egresos para análisis y presupuestos."
         actions={
-          <button onClick={() => setModal(true)} className="btn-primary">
+          <button onClick={() => setModal(true)} className="btn-primary" data-tutorial="nueva-categoria">
             <Plus size={16} strokeWidth={1.5} />
             Nueva categoría
-          </button>
-        }
-      />
-
-      {/* ── Guía interactiva (solo visible en paso 1 del tutorial) ───────── */}
-      <TutorialGuide
-        stepIndex={1}
-        title="Explora y crea una categoría"
-        description="Ya tienes 16 categorías colombianas cargadas automáticamente. Revísalas — cubren los gastos más comunes. Si necesitas una personalizada, créala ahora."
-        tips={[
-          'Ya tienes: <b>Alimentación, Transporte, Arriendo, Salud, Entretenimiento</b> y más',
-          '<b>Tipo Egreso</b> = gastos que salen de tu bolsillo · <b>Tipo Ingreso</b> = plata que entra',
-          'El <b>color</b> aparecerá en gráficas y reportes — escoge uno que identifiques fácilmente',
-          '¿Todo bien? Crea una categoría extra o simplemente avanza al siguiente paso',
-        ]}
-        action={
-          <button onClick={() => setModal(true)} className="btn-primary gap-2">
-            <Plus size={15} strokeWidth={2} /> Crear categoría personalizada
           </button>
         }
       />

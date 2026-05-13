@@ -5,7 +5,6 @@ import { api } from '../services/api';
 import { formatCOP } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
-import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -142,26 +141,9 @@ export default function Cuentas() {
         title="Cuentas"
         subtitle="Cada billetera, cuenta bancaria, tarjeta o inversión que conforma tu patrimonio."
         actions={
-          <button onClick={() => setModal(true)} className="btn-primary">
+          <button onClick={() => setModal(true)} className="btn-primary" data-tutorial="nueva-cuenta">
             <Plus size={16} strokeWidth={1.5} />
             Nueva cuenta
-          </button>
-        }
-      />
-
-      {/* ── Guía interactiva (solo visible en paso 0 del tutorial) ────────── */}
-      <TutorialGuide
-        stepIndex={0}
-        title="Crea tu primera cuenta bancaria"
-        description="Una cuenta es cualquier lugar donde guardas dinero: banco, efectivo en billetera, tarjeta de crédito o inversión. Crea una cuenta por cada lugar donde tienes plata."
-        tips={[
-          '<b>Nombre:</b> algo que reconozcas fácilmente. Ej: "Bancolombia nómina", "Nequi", "Efectivo billetera"',
-          '<b>Tipo:</b> Ahorros → banco | Efectivo → billetera física | Tarjeta → crédito (puede ser negativo) | Inversión → CDT, fondos, acciones',
-          '<b>Saldo inicial:</b> ¿cuánto tienes exactamente ahora mismo en esa cuenta? No el cupo, el saldo real.',
-        ]}
-        action={
-          <button onClick={() => setModal(true)} className="btn-primary gap-2">
-            <Plus size={15} strokeWidth={2} /> Crear mi primera cuenta
           </button>
         }
       />
@@ -221,8 +203,6 @@ function CuentaModal({ open, onClose, onSaved }) {
   });
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState(null);
-  const { active, step }      = useTutorial();
-  const isTutorial            = active && step === 0; // mostrar pistas en paso 0
 
   useEffect(() => {
     if (open) {
@@ -277,11 +257,6 @@ function CuentaModal({ open, onClose, onSaved }) {
             autoFocus
             required
           />
-          {isTutorial && (
-            <p className="text-[11px] text-gold/80 mt-1.5">
-              💡 Algo reconocible: "Bancolombia nómina", "Nequi", "Efectivo billetera", "Tarjeta Falabella"
-            </p>
-          )}
         </div>
 
         {/* Tipo */}
@@ -305,11 +280,6 @@ function CuentaModal({ open, onClose, onSaved }) {
               );
             })}
           </div>
-          {isTutorial && (
-            <p className="text-[11px] text-gold/80 mt-1.5">
-              💡 <b>Ahorros</b> = banco · <b>Efectivo</b> = billetera física · <b>Tarjeta</b> = crédito (puede ser negativo) · <b>Inversión</b> = CDT, fondos
-            </p>
-          )}
         </div>
 
         {/* Saldo inicial */}
@@ -322,11 +292,6 @@ function CuentaModal({ open, onClose, onSaved }) {
             value={form.saldo_inicial}
             onChange={e => setForm({ ...form, saldo_inicial: e.target.value })}
           />
-          {isTutorial && (
-            <p className="text-[11px] text-gold/80 mt-1.5">
-              💡 ¿Cuánto tienes exactamente ahí <b>HOY</b>? Para tarjetas de crédito, ingresa el valor <b>negativo</b> de tu deuda actual.
-            </p>
-          )}
           <p className="text-xs text-ink/45 mt-1.5">Para tarjetas de crédito usa valores negativos.</p>
         </div>
 

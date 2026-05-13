@@ -5,7 +5,6 @@ import { api } from '../services/api';
 import { formatCOP, currentPeriod, periodLabel } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
-import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -66,29 +65,11 @@ export default function Presupuestos() {
               value={periodo}
               onChange={e => setPeriodo(e.target.value)}
             />
-            <button onClick={() => setModal(true)} className="btn-primary">
+            <button onClick={() => setModal(true)} className="btn-primary" data-tutorial="nuevo-presupuesto">
               <Plus size={16} strokeWidth={1.5} />
               Nuevo presupuesto
             </button>
           </div>
-        }
-      />
-
-      {/* ── Guía interactiva (solo visible en paso 3 del tutorial) ───────── */}
-      <TutorialGuide
-        stepIndex={3}
-        title="Define tu primer presupuesto"
-        description="Un presupuesto es un límite mensual para una categoría de gasto. Cuando te acerques al límite, Patrimonio te avisa. Empieza por tu gasto más grande."
-        tips={[
-          'Elige la <b>categoría</b> donde más gastas — Alimentación, Transporte o Arriendo son buenos candidatos',
-          'Pon un <b>límite realista</b>: revisa cuánto gastaste el mes pasado y ajusta un 10% menos',
-          'El sistema muestra <b>alertas</b> cuando superas el 80% y marca en rojo cuando te pasas',
-          'Puedes crear presupuestos para <b>diferentes meses</b> con el selector de periodo',
-        ]}
-        action={
-          <button onClick={() => setModal(true)} className="btn-primary gap-2">
-            <Plus size={15} strokeWidth={2} /> Crear mi primer presupuesto
-          </button>
         }
       />
 

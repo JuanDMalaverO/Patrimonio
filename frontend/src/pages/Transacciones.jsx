@@ -6,7 +6,6 @@ import { api } from '../services/api';
 import { formatCOP, formatDate } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
-import TutorialGuide from '../components/TutorialGuide.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -98,29 +97,9 @@ export default function Transacciones() {
               Crear primera cuenta
             </button>
           ) : (
-            <button onClick={abrirModal} className="btn-primary">
+            <button onClick={abrirModal} className="btn-primary" data-tutorial="nuevo-movimiento">
               <Plus size={16} strokeWidth={1.5} />
               Nuevo movimiento
-            </button>
-          )
-        }
-      />
-
-      {/* ── Guía interactiva (solo visible en paso 2 del tutorial) ───────── */}
-      <TutorialGuide
-        stepIndex={2}
-        title="Registra tu primer movimiento"
-        description="Anota el ingreso o gasto más reciente que recuerdes. No tiene que ser perfecto — lo importante es empezar a registrar tu flujo de dinero."
-        tips={[
-          '<b>Egreso</b> = plata que sale · <b>Ingreso</b> = plata que entra · <b>Transferencia</b> = mover entre tus cuentas',
-          'Selecciona la <b>cuenta</b> desde donde salió o entró el dinero',
-          'Elige la <b>categoría</b> correcta — esto alimentará tus presupuestos y gráficas',
-          'La <b>descripción</b> es opcional pero te ayuda a recordar el detalle del gasto',
-        ]}
-        action={
-          !sinCuentas && (
-            <button onClick={() => setModal(true)} className="btn-primary gap-2">
-              <Plus size={15} strokeWidth={2} /> Registrar mi primer movimiento
             </button>
           )
         }
