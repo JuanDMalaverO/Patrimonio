@@ -3,71 +3,121 @@ import { useState, useEffect } from 'react';
 import {
   Sparkles, TriangleAlert, TrendingUp, Lightbulb,
   AlertCircle, RefreshCw, Lock, ArrowRight, ChevronRight,
+  Flag, Shield,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { api } from '../services/api.js';
+import { formatCOP } from '../utils/format.js';
 
-// ── Config visual por tipo de insight ────────────────────────────────────────
-const TIPO_META = {
-  alerta:       { icon: TriangleAlert, color: 'text-rust',  bg: 'bg-rust/8',  border: 'border-rust/20',  label: 'Alerta'      },
-  riesgo:       { icon: AlertCircle,   color: 'text-ink',   bg: 'bg-ink/5',   border: 'border-ink/15',   label: 'Riesgo'      },
-  positivo:     { icon: TrendingUp,    color: 'text-sage',  bg: 'bg-sage/8',  border: 'border-sage/20',  label: 'Positivo'    },
-  oportunidad:  { icon: Lightbulb,     color: 'text-gold',  bg: 'bg-gold/8',  border: 'border-gold/20',  label: 'Oportunidad' },
+// ── Tipo de insight ───────────────────────────────────────────────────────────
+const TIPO = {
+  alerta:      { icon: TriangleAlert, color: 'text-rust',  bg: 'bg-rust/8',  border: 'border-rust/20',  label: 'Alerta'      },
+  riesgo:      { icon: AlertCircle,   color: 'text-ink',   bg: 'bg-ink/5',   border: 'border-ink/15',   label: 'Riesgo'      },
+  positivo:    { icon: TrendingUp,    color: 'text-sage',  bg: 'bg-sage/8',  border: 'border-sage/20',  label: 'Positivo'    },
+  oportunidad: { icon: Lightbulb,     color: 'text-gold',  bg: 'bg-gold/8',  border: 'border-gold/20',  label: 'Oportunidad' },
 };
 
-// ── Score config ──────────────────────────────────────────────────────────────
-function scoreColor(valor) {
-  if (valor >= 90) return '#5a6b58';
-  if (valor >= 75) return '#5a6b58';
-  if (valor >= 60) return '#a88a3a';
-  if (valor >= 40) return '#a88a3a';
+function scoreColor(v) {
+  if (v >= 80) return '#5a6b58';
+  if (v >= 60) return '#a88a3a';
   return '#a8472a';
 }
 
-// ── Tiempo relativo ───────────────────────────────────────────────────────────
-function tiempoRelativo(fechaStr) {
-  if (!fechaStr) return '';
-  const diff = (Date.now() - new Date(fechaStr).getTime()) / 60000;
-  if (diff < 2)  return 'Ahora mismo';
-  if (diff < 60) return `Hace ${Math.floor(diff)} min`;
-  const h = Math.floor(diff / 60);
+function tiempoRelativo(s) {
+  if (!s) return '';
+  const m = (Date.now() - new Date(s).getTime()) / 60000;
+  if (m < 2)  return 'Ahora mismo';
+  if (m < 60) return `Hace ${Math.floor(m)} min`;
+  const h = Math.floor(m / 60);
   if (h < 24) return `Hace ${h}h`;
   return `Hace ${Math.floor(h / 24)}d`;
 }
 
-// ── Card de insight individual ────────────────────────────────────────────────
-function InsightCard({ insight }) {
-  const meta = TIPO_META[insight.tipo] || TIPO_META.riesgo;
-  const Icon = meta.icon;
-
+// ── Score desglosado ──────────────────────────────────────────────────────────
+function ScoreSection({ score }) {
+  const color = scoreColor(score.valor);
   return (
-    <div className={`rounded-sm border ${meta.border} ${meta.bg} p-5`}>
-      <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 mt-0.5 ${meta.color}`}>
-          <Icon size={15} strokeWidth={2} />
+    <div className="space-y-4">
+      {/* Score global */}
+      <div className="flex items-center gap-5 p-5 bg-ink text-paper rounded-sm">
+        <div className="flex-shrink-0 text-center w-16">
+          <div className="font-display text-5xl tracking-tightest leading-none" style={{ color: '#f5f3ee' }}>
+            {score.valor}
+          </div>
+          <div className="text-[10px] text-paper/40 mt-1">/ 100</div>
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className={`text-[9px] uppercase tracking-[0.18em] font-semibold ${meta.color}`}>
-              {meta.label}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-2 flex-1 bg-paper/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${score.valor}%`, background: color }}
+              />
+            </div>
+            <span className="text-sm font-bold flex-shrink-0" style={{ color }}>
+              {score.etiqueta}
             </span>
           </div>
-          <p className="text-sm font-semibold text-ink leading-tight mb-1.5">
-            {insight.titulo}
-          </p>
-          <p className="text-sm text-ink/65 leading-relaxed">
-            {insight.descripcion}
-          </p>
+          <p className="text-xs text-paper/55 leading-relaxed">{score.razon}</p>
+        </div>
+      </div>
+
+      {/* Componentes 2×2 */}
+      {score.componentes?.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {score.componentes.map((c, i) => {
+            const pct  = (c.puntaje / c.max) * 100;
+            const col  = scoreColor(pct);
+            return (
+              <div key={i} className="border border-ink/10 rounded-sm p-4 bg-bone/30">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] uppercase tracking-[0.15em] text-ink/45 font-medium leading-tight">
+                    {c.nombre}
+                  </span>
+                  <span className="font-display text-lg leading-none" style={{ color: col }}>
+                    {c.puntaje}
+                    <span className="text-[10px] text-ink/30 font-sans">/{c.max}</span>
+                  </span>
+                </div>
+                <div className="h-1 bg-ink/8 rounded-full overflow-hidden mb-2">
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: col }} />
+                </div>
+                <p className="text-[11px] text-ink/55 leading-relaxed">{c.detalle}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Card de insight ───────────────────────────────────────────────────────────
+function InsightCard({ insight }) {
+  const t    = TIPO[insight.tipo] || TIPO.riesgo;
+  const Icon = t.icon;
+  return (
+    <div className={`rounded-sm border ${t.border} ${t.bg} p-4`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex-shrink-0 mt-0.5 ${t.color}`}>
+          <Icon size={14} strokeWidth={2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className={`text-[9px] uppercase tracking-[0.18em] font-semibold ${t.color} mb-1`}>
+            {t.label}
+          </div>
+          <p className="text-sm font-semibold text-ink leading-tight mb-1.5">{insight.titulo}</p>
+          <p className="text-sm text-ink/65 leading-relaxed">{insight.descripcion}</p>
           {insight.accion && (
-            <div className="mt-3 flex items-start gap-1.5">
-              <ChevronRight size={12} className="text-ink/40 mt-0.5 flex-shrink-0" />
+            <div className="mt-2.5 flex items-start gap-1.5">
+              <ChevronRight size={11} className="text-ink/40 mt-0.5 flex-shrink-0" />
               <p className="text-xs text-ink/70 leading-relaxed">{insight.accion}</p>
             </div>
           )}
           {insight.impacto && (
             <div className="mt-1.5 flex items-start gap-1.5">
-              <ArrowRight size={12} className="text-ink/30 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
-              <p className="text-xs text-ink/50 italic leading-relaxed">{insight.impacto}</p>
+              <ArrowRight size={11} className="text-ink/30 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <p className="text-xs text-ink/45 italic leading-relaxed">{insight.impacto}</p>
             </div>
           )}
         </div>
@@ -76,102 +126,92 @@ function InsightCard({ insight }) {
   );
 }
 
-// ── Card de score ─────────────────────────────────────────────────────────────
-function ScoreCard({ score }) {
-  const color = scoreColor(score.valor);
+// ── Proyección de metas ───────────────────────────────────────────────────────
+function MetasProyeccion({ metas }) {
+  if (!metas?.length) return null;
   return (
-    <div className="flex items-center gap-5 p-5 border border-ink/10 rounded-sm bg-paper">
-      <div className="flex-shrink-0 text-center">
-        <div className="font-display text-5xl tracking-tightest leading-none" style={{ color }}>
-          {score.valor}
-        </div>
-        <div className="text-[10px] text-ink/40 mt-1">/ 100</div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="h-1.5 flex-1 bg-ink/8 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${score.valor}%`, backgroundColor: color }}
-            />
+    <div className="space-y-3">
+      <div className="eyebrow">Proyección de metas</div>
+      {metas.map((m, i) => (
+        <div key={i} className="border border-gold/20 bg-gold/5 rounded-sm p-4 flex items-start gap-3">
+          <Flag size={14} className="text-gold flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink mb-1">{m.nombre}</p>
+            <p className="text-sm text-ink/65 leading-relaxed">{m.comentario}</p>
           </div>
-          <span className="text-xs font-semibold flex-shrink-0" style={{ color }}>
-            {score.etiqueta}
-          </span>
         </div>
-        <p className="text-xs text-ink/55 leading-relaxed">{score.razon}</p>
-      </div>
+      ))}
     </div>
   );
 }
 
-// ── Estado de carga ───────────────────────────────────────────────────────────
+// ── Carga ─────────────────────────────────────────────────────────────────────
 function LoadingState() {
   return (
-    <div className="py-10 flex flex-col items-center gap-4">
+    <div className="py-12 flex flex-col items-center gap-4">
       <div className="relative">
         <div className="w-10 h-10 border-2 border-ink/10 border-t-ink rounded-full animate-spin" />
         <Sparkles size={14} className="absolute inset-0 m-auto text-ink/40" />
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-ink">Analizando tus finanzas…</p>
-        <p className="text-xs text-ink/40 mt-1">Esto puede tomar unos segundos</p>
+        <p className="text-xs text-ink/40 mt-1">Puede tomar unos segundos</p>
       </div>
     </div>
   );
 }
 
-// ── Card bloqueada para usuarios free ─────────────────────────────────────────
-function LockedCard({ onUpgrade, upgrading }) {
+// ── Teaser free ───────────────────────────────────────────────────────────────
+function LockedCard() {
   return (
     <section className="card-elevated overflow-hidden">
-      {/* Header */}
       <div className="px-8 py-5 border-b border-ink/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles size={15} className="text-gold" strokeWidth={1.5} />
-          <span className="eyebrow">Análisis con IA</span>
+          <span className="eyebrow">Análisis financiero con IA</span>
         </div>
         <span className="text-[10px] uppercase tracking-[0.18em] text-gold font-semibold border border-gold/30 px-2 py-0.5 rounded-sm">
           Premium
         </span>
       </div>
 
-      {/* Contenido borroso + overlay */}
       <div className="relative">
         {/* Mock borroso */}
-        <div className="p-8 space-y-3 blur-[3px] pointer-events-none select-none opacity-50" aria-hidden>
-          <div className="h-16 bg-ink/5 rounded-sm" />
+        <div className="p-8 space-y-4 blur-sm pointer-events-none select-none opacity-40" aria-hidden>
+          <div className="h-20 bg-ink/90 rounded-sm" />
           <div className="grid grid-cols-2 gap-3">
-            <div className="h-24 bg-rust/8 rounded-sm border border-rust/15" />
-            <div className="h-24 bg-sage/8 rounded-sm border border-sage/15" />
+            <div className="h-20 bg-ink/8 rounded-sm border border-ink/10" />
+            <div className="h-20 bg-sage/8 rounded-sm border border-sage/15" />
+            <div className="h-20 bg-rust/8 rounded-sm border border-rust/15" />
+            <div className="h-20 bg-gold/8 rounded-sm border border-gold/15" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="h-24 bg-gold/8 rounded-sm border border-gold/15" />
-            <div className="h-24 bg-ink/5 rounded-sm border border-ink/10" />
+          <div className="space-y-3">
+            <div className="h-16 bg-rust/8 rounded-sm border border-rust/15" />
+            <div className="h-16 bg-gold/8 rounded-sm border border-gold/15" />
           </div>
         </div>
 
-        {/* Overlay de upgrade */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-paper/80 backdrop-blur-[2px]">
-          <div className="text-center max-w-xs">
-            <div className="w-11 h-11 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
-              <Lock size={18} strokeWidth={1.5} className="text-gold" />
+        {/* Overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-paper/85 backdrop-blur-[3px]">
+          <div className="text-center max-w-sm px-4">
+            <div className="w-12 h-12 rounded-sm bg-gold/10 flex items-center justify-center mx-auto mb-4">
+              <Lock size={20} strokeWidth={1.5} className="text-gold" />
             </div>
-            <p className="font-semibold text-ink mb-1">Análisis financiero con IA</p>
-            <p className="text-sm text-ink/55 leading-relaxed">
-              Patrones detectados, recomendaciones accionables y score financiero mensual.
+            <p className="font-display text-xl tracking-tightest mb-2">Análisis con IA</p>
+            <p className="text-sm text-ink/55 leading-relaxed mb-1">
+              Score de salud financiera desglosado, insights con números reales y proyección personalizada de tus metas de ahorro.
             </p>
           </div>
-          <button
-            onClick={onUpgrade}
-            disabled={upgrading}
-            className="btn-primary gap-2 disabled:opacity-60"
-          >
-            {upgrading
-              ? <span className="w-4 h-4 border-2 border-paper/30 border-t-paper rounded-full animate-spin" />
-              : <><Sparkles size={14} /> Activar Premium</>
-            }
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <a
+              href="mailto:soporte@mypatrimony.com?subject=Activar%20Premium"
+              className="btn-primary gap-2"
+            >
+              <Sparkles size={14} strokeWidth={1.5} />
+              Activar Premium
+            </a>
+            <span className="text-[11px] text-ink/35">soporte@mypatrimony.com</span>
+          </div>
         </div>
       </div>
     </section>
@@ -180,18 +220,18 @@ function LockedCard({ onUpgrade, upgrading }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function AiInsights({ periodo }) {
-  const { user, upgradePlan } = useAuth();
+  const { user } = useAuth();
   const isPremium = user?.plan === 'premium';
 
-  const [data, setData]         = useState(null);
-  const [loading, setLoading]   = useState(false);
+  const [data, setData]             = useState(null);
+  const [loading, setLoading]       = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError]       = useState(null);
-  const [upgrading, setUpgrading] = useState(false);
+  const [error, setError]           = useState(null);
 
   useEffect(() => {
     if (!isPremium) return;
     setLoading(true);
+    setError(null);
     api.getInsights(periodo)
       .then(setData)
       .catch(e => setError(e.message))
@@ -202,8 +242,7 @@ export default function AiInsights({ periodo }) {
     setRefreshing(true);
     setError(null);
     try {
-      const d = await api.refreshInsights(periodo);
-      setData(d);
+      setData(await api.refreshInsights(periodo));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -211,18 +250,7 @@ export default function AiInsights({ periodo }) {
     }
   };
 
-  const handleUpgrade = async () => {
-    setUpgrading(true);
-    try {
-      await upgradePlan();
-    } finally {
-      setUpgrading(false);
-    }
-  };
-
-  if (!isPremium) {
-    return <LockedCard onUpgrade={handleUpgrade} upgrading={upgrading} />;
-  }
+  if (!isPremium) return <LockedCard />;
 
   return (
     <section className="card-elevated overflow-hidden">
@@ -230,7 +258,7 @@ export default function AiInsights({ periodo }) {
       <div className="px-8 py-5 border-b border-ink/10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Sparkles size={15} className="text-gold" strokeWidth={1.5} />
-          <span className="eyebrow">Análisis con IA</span>
+          <span className="eyebrow">Análisis financiero con IA</span>
           {data?._meta && (
             <span className="text-[10px] text-ink/35 ml-1">
               · {tiempoRelativo(data._meta.generado_at)}
@@ -249,35 +277,40 @@ export default function AiInsights({ periodo }) {
       </div>
 
       {/* Cuerpo */}
-      <div className="p-8">
+      <div className="p-6 md:p-8">
         {(loading || refreshing) && !data && <LoadingState />}
 
         {error && (
-          <div className="text-sm text-rust border border-rust/20 bg-rust/5 px-4 py-3 rounded-sm">
+          <div className="text-sm text-rust border border-rust/20 bg-rust/5 px-4 py-3 rounded-sm leading-relaxed">
             {error}
           </div>
         )}
 
         {data && !loading && (
-          <div className="space-y-5">
-            {/* Score */}
-            {data.score && <ScoreCard score={data.score} />}
+          <div className="space-y-7">
+            {/* 1. Score desglosado */}
+            {data.score && <ScoreSection score={data.score} />}
 
-            {/* Insights */}
+            {/* 2. Insights */}
             {data.insights?.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {data.insights.map((insight, i) => (
-                  <InsightCard key={i} insight={insight} />
-                ))}
+              <div className="space-y-3">
+                <div className="eyebrow">Insights detectados</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {data.insights.map((ins, i) => <InsightCard key={i} insight={ins} />)}
+                </div>
               </div>
+            )}
+
+            {/* 3. Proyección de metas */}
+            {data.metas_proyeccion?.length > 0 && (
+              <MetasProyeccion metas={data.metas_proyeccion} />
             )}
           </div>
         )}
 
-        {/* Overlay sutil cuando refreshing sobre datos existentes */}
         {refreshing && data && (
-          <div className="mt-4 text-center text-xs text-ink/40">
-            <span className="inline-flex items-center gap-1.5">
+          <div className="mt-4 text-center">
+            <span className="inline-flex items-center gap-1.5 text-xs text-ink/40">
               <RefreshCw size={11} className="animate-spin" />
               Regenerando con datos actualizados…
             </span>

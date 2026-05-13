@@ -31,9 +31,7 @@ export const api = {
   updateProfile:  (body) => request('/auth/profile',  { method: 'PUT', body: JSON.stringify(body) }),
   changePassword: (body) => request('/auth/password', { method: 'PUT', body: JSON.stringify(body) }),
 
-  // ── Suscripción ────────────────────────────────────────────────────────────
-  upgradePlan:   () => request('/subscription/upgrade',   { method: 'POST' }),
-  downgradePlan: () => request('/subscription/downgrade', { method: 'POST' }),
+  // ── Suscripción — gestionada manualmente, sin self-service ───────────────────
 
   // ── IA ─────────────────────────────────────────────────────────────────────
   getInsights:     (periodo) => request(`/ai/insights?periodo=${periodo}`),

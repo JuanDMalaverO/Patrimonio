@@ -181,59 +181,40 @@ function PasswordForm() {
 }
 
 // ── Sección de suscripción ────────────────────────────────────────────────────
-function SubscriptionSection({ user, onPlanChange }) {
-  const [loading, setLoading] = useState(false);
-
-  const toggle = async () => {
-    setLoading(true);
-    try {
-      if (user?.plan === 'free') {
-        await api.upgradePlan();
-        onPlanChange('premium');
-      } else {
-        await api.downgradePlan();
-        onPlanChange('free');
-      }
-    } finally { setLoading(false); }
-  };
-
+function SubscriptionSection({ user }) {
   const isPremium = user?.plan === 'premium';
-
   return (
     <div className="px-6 py-5 flex items-center justify-between flex-wrap gap-4">
       <div>
         <div className="flex items-center gap-2 mb-1">
           {isPremium
-            ? <><Sparkles size={14} className="text-gold" strokeWidth={2} /><span className="text-sm font-semibold text-gold">Plan Premium</span></>
-            : <><span className="text-sm font-semibold text-ink">Plan Free</span></>
+            ? <><Sparkles size={14} className="text-gold" strokeWidth={2} /><span className="text-sm font-semibold text-gold">Plan Premium activo</span></>
+            : <span className="text-sm font-semibold text-ink">Plan Free</span>
           }
         </div>
         <p className="text-xs text-ink/50">
           {isPremium
-            ? 'Tienes acceso al análisis financiero con IA y todas las funciones premium.'
-            : 'Funciones core ilimitadas. Activa Premium para análisis con IA.'
+            ? 'Tienes acceso completo al análisis financiero con IA y todas las funciones premium.'
+            : 'Funciones core ilimitadas. Para activar Premium, escríbenos y lo activamos manualmente.'
           }
         </p>
       </div>
-      <button
-        onClick={toggle}
-        disabled={loading}
-        className={isPremium ? 'btn-ghost text-sm disabled:opacity-50' : 'btn-primary text-sm gap-1.5 disabled:opacity-50'}
-      >
-        {loading
-          ? <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-          : isPremium
-            ? 'Cancelar Premium'
-            : <><Sparkles size={13} /> Activar Premium</>
-        }
-      </button>
+      {!isPremium && (
+        <a
+          href="mailto:soporte@mypatrimony.com?subject=Activar%20Premium%20Patrimonio"
+          className="btn-primary text-sm gap-1.5"
+        >
+          <Sparkles size={13} strokeWidth={1.5} />
+          Activar Premium
+        </a>
+      )}
     </div>
   );
 }
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function Configuracion() {
-  const { user, logout, upgradePlan, downgradePlan, setUser } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -243,11 +224,6 @@ export default function Configuracion() {
 
   const handleProfileUpdate = (nombre) => {
     setUser(prev => prev ? { ...prev, nombre_completo: nombre } : null);
-  };
-
-  const handlePlanChange = (plan) => {
-    if (plan === 'premium') upgradePlan();
-    else downgradePlan();
   };
 
   return (
@@ -279,7 +255,7 @@ export default function Configuracion() {
 
         {/* Suscripción */}
         <Section icon={CreditCard} title="Suscripción">
-          <SubscriptionSection user={user} onPlanChange={handlePlanChange} />
+          <SubscriptionSection user={user} />
         </Section>
 
         {/* Sesión */}
