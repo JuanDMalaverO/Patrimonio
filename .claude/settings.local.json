@@ -7,7 +7,14 @@
       "Bash(git rm *)",
       "Bash(git commit -m 'chore: add .gitignore to protect API keys and exclude node_modules *)",
       "Bash(git commit -m 'feat: AI financial insights + subscription system \\(Free/Premium\\) *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(git commit -m 'fix: getUserPlan reads from DB instead of stale session payload *)",
+      "Bash(git commit -m 'fix: SQL correlated subquery + curl_close deprecation + callClaude return path *)",
+      "Bash(grep -n 'exit\\\\|parseAndSanitize\\\\|inesperada\\\\|return $this' backend/controllers/AiController.php)",
+      "Bash(git commit -m 'fix: robust AI response parsing — handle markdown, lenient validation, safe truncation *)",
+      "Bash(git commit -m 'fix: increase MAX_TOKENS 1000→1800 + detect truncated responses *)",
+      "WebFetch(domain:docs.wompi.co)",
+      "WebSearch"
     ]
   }
 }

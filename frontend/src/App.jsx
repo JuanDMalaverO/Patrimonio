@@ -5,6 +5,8 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { TutorialProvider } from './contexts/TutorialContext.jsx';
 import TutorialBar from './components/TutorialBar.jsx';
 import TutorialSpotlight from './components/TutorialSpotlight.jsx';
+import { CheckoutProvider } from './contexts/CheckoutContext.jsx';
+import PagoResultado from './pages/PagoResultado';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
@@ -23,20 +25,23 @@ function AppShell() {
   return (
     <ProtectedRoute>
       <TutorialProvider>
-        <TutorialBar />
-        <TutorialSpotlight />
-        <Layout>
-          <Routes>
-            <Route path="/dashboard"     element={<Dashboard />} />
-            <Route path="/cuentas"       element={<Cuentas />} />
-            <Route path="/transacciones" element={<Transacciones />} />
-            <Route path="/presupuestos"  element={<Presupuestos />} />
-            <Route path="/metas"         element={<Metas />} />
-            <Route path="/categorias"    element={<Categorias />} />
-            <Route path="/configuracion" element={<Configuracion />} />
-            <Route path="*"              element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Layout>
+        <CheckoutProvider>
+          <TutorialBar />
+          <TutorialSpotlight />
+          <Layout>
+            <Routes>
+              <Route path="/dashboard"     element={<Dashboard />} />
+              <Route path="/cuentas"       element={<Cuentas />} />
+              <Route path="/transacciones" element={<Transacciones />} />
+              <Route path="/presupuestos"  element={<Presupuestos />} />
+              <Route path="/metas"         element={<Metas />} />
+              <Route path="/categorias"    element={<Categorias />} />
+              <Route path="/configuracion" element={<Configuracion />} />
+              <Route path="/pago/resultado" element={<PagoResultado />} />
+              <Route path="*"              element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Layout>
+        </CheckoutProvider>
       </TutorialProvider>
     </ProtectedRoute>
   );

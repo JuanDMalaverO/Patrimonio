@@ -26,6 +26,7 @@ require_once __DIR__ . '/../config/ai.php';
 require_once __DIR__ . '/../config/mail.php';
 require_once __DIR__ . '/../services/MailService.php';
 require_once __DIR__ . '/../utils/response.php';
+require_once __DIR__ . '/../config/wompi.php';
 require_once __DIR__ . '/../controllers/AuthController.php';
 require_once __DIR__ . '/../controllers/SubscriptionController.php';
 require_once __DIR__ . '/../controllers/AiController.php';
@@ -34,6 +35,7 @@ require_once __DIR__ . '/../controllers/CategoriasController.php';
 require_once __DIR__ . '/../controllers/TransaccionesController.php';
 require_once __DIR__ . '/../controllers/PresupuestosController.php';
 require_once __DIR__ . '/../controllers/MetasController.php';
+require_once __DIR__ . '/../controllers/PagosController.php';
 require_once __DIR__ . '/../controllers/DashboardController.php';
 
 $db = (new Database())->connect();
@@ -50,6 +52,12 @@ try {
     // ── Rutas públicas (sin sesión) ───────────────────────────────────────────
     if ($resource === 'auth') {
         (new AuthController($db))->handle($method, $id);
+        exit;
+    }
+
+    // Webhook de Wompi — público, sin sesión (la autenticidad se verifica por firma HMAC)
+    if ($resource === 'pagos' && $id === 'webhook' && $method === 'POST') {
+        (new PagosController($db))->handleWebhook();
         exit;
     }
 
@@ -81,6 +89,9 @@ try {
             break;
         case 'metas':
             (new MetasController($db))->handle($method, $id);
+            break;
+        case 'pagos':
+            (new PagosController($db))->handle($method, $id);
             break;
         case 'dashboard':
             (new DashboardController($db))->handle($method);

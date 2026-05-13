@@ -1,8 +1,9 @@
 // src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Wallet, Plus, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useCheckout } from '../contexts/CheckoutContext.jsx';
 import AiInsights from '../components/AiInsights.jsx';
 import {
   AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, YAxis
@@ -18,6 +19,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { openCheckout } = useCheckout();
+  const isPremium = user?.plan === 'premium';
   const periodo = currentPeriod();
 
   useEffect(() => {
@@ -183,6 +186,28 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
+
+        {/* Banner de upgrade — solo para usuarios free */}
+        {!isPremium && (
+          <div className="flex items-center justify-between gap-4 border border-gold/25 bg-gold/5 rounded-sm px-5 py-4 flex-wrap">
+            <div className="flex items-start gap-3">
+              <Sparkles size={15} className="text-gold flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+              <div>
+                <p className="text-sm font-semibold text-ink">Desbloquea el análisis con IA</p>
+                <p className="text-xs text-ink/50 mt-0.5">
+                  Score financiero, insights con tus números reales y proyección de metas.
+                  Desde <strong>$19.900/mes</strong> o <strong>$149.000/año</strong>.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => openCheckout('annual')}
+              className="btn-primary text-sm gap-1.5 flex-shrink-0"
+            >
+              <Sparkles size={13} strokeWidth={1.5} /> Activar Premium
+            </button>
+          </div>
+        )}
 
         {/* IA INSIGHTS — premium arriba del fold, free con teaser bloqueado */}
         <AiInsights periodo={periodo} />

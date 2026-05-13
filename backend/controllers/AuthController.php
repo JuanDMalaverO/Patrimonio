@@ -221,12 +221,25 @@ class AuthController {
         // Leer onboarding_completado siempre fresco de la DB para evitar
         // que un payload desactualizado haga reaparecer el tutorial.
         $binaryId = hex2bin($usuario['id']);
-        $stmt = $this->db->prepare("SELECT onboarding_completado, plan FROM usuarios WHERE id = ? AND deleted_at IS NULL");
+        $stmt = $this->db->prepare("
+            SELECT onboarding_completado, plan, plan_expires_at
+            FROM usuarios WHERE id = ? AND deleted_at IS NULL
+        ");
         $stmt->execute([$binaryId]);
         $row = $stmt->fetch();
         if ($row !== false) {
             $usuario['onboarding_completado'] = (bool)$row['onboarding_completado'];
-            $usuario['plan']                  = $row['plan'] ?? 'free';
+
+            // Auto-expirar plan premium si venció
+            $plan = $row['plan'] ?? 'free';
+            if ($plan === 'premium' && !empty($row['plan_expires_at'])
+                && strtotime($row['plan_expires_at']) < time()) {
+                $plan = 'free';
+                $this->db->prepare("UPDATE usuarios SET plan = 'free' WHERE id = ?")
+                         ->execute([$binaryId]);
+            }
+            $usuario['plan']             = $plan;
+            $usuario['plan_expires_at']  = $row['plan_expires_at'] ?? null;
         }
 
         Response::json(['usuario' => $usuario]);
@@ -274,11 +287,23 @@ class AuthController {
         return $this->cachedPayload;
     }
 
-    /** Retorna el plan leyendo siempre desde la DB — el payload de sesión puede estar desactualizado si el plan fue cambiado manualmente. */
+    /**
+     * Retorna el plan desde la DB (siempre fresco).
+     * Si el plan premium expiró, revierte a free automáticamente.
+     */
     public function getUserPlan(): string {
-        $stmt = $this->db->prepare("SELECT plan FROM usuarios WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT plan, plan_expires_at FROM usuarios WHERE id = ?");
         $stmt->execute([USER_ID]);
         $row = $stmt->fetch();
+        if (!$row) return 'free';
+
+        if ($row['plan'] === 'premium' && !empty($row['plan_expires_at'])) {
+            if (strtotime($row['plan_expires_at']) < time()) {
+                $this->db->prepare("UPDATE usuarios SET plan = 'free' WHERE id = ?")
+                         ->execute([USER_ID]);
+                return 'free';
+            }
+        }
         return $row['plan'] ?? 'free';
     }
 

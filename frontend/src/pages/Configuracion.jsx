@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Sun, Moon, Sparkles, Eye, EyeOff, Check, LogOut, User, Lock, Palette, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useCheckout } from '../contexts/CheckoutContext.jsx';
 import { useTheme } from '../contexts/ThemeContext.jsx';
 import { api } from '../services/api.js';
 import PageHeader from '../components/PageHeader.jsx';
@@ -182,31 +183,60 @@ function PasswordForm() {
 
 // ── Sección de suscripción ────────────────────────────────────────────────────
 function SubscriptionSection({ user }) {
+  const { openCheckout } = useCheckout();
   const isPremium = user?.plan === 'premium';
+
+  const expiryDate = user?.plan_expires_at
+    ? new Date(user.plan_expires_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null;
+
   return (
-    <div className="px-6 py-5 flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          {isPremium
-            ? <><Sparkles size={14} className="text-gold" strokeWidth={2} /><span className="text-sm font-semibold text-gold">Plan Premium activo</span></>
-            : <span className="text-sm font-semibold text-ink">Plan Free</span>
-          }
+    <div className="px-6 py-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            {isPremium
+              ? <><Sparkles size={14} className="text-gold" strokeWidth={2} /><span className="text-sm font-semibold text-gold">Plan Premium activo</span></>
+              : <span className="text-sm font-semibold text-ink">Plan Free</span>
+            }
+          </div>
+          <p className="text-xs text-ink/50">
+            {isPremium
+              ? 'Acceso completo al análisis financiero con IA y todas las funciones premium.'
+              : 'Funciones core ilimitadas. Activa Premium para análisis con IA.'
+            }
+          </p>
+          {isPremium && expiryDate && (
+            <p className="text-xs text-ink/40 mt-1">Válido hasta: {expiryDate}</p>
+          )}
         </div>
-        <p className="text-xs text-ink/50">
-          {isPremium
-            ? 'Tienes acceso completo al análisis financiero con IA y todas las funciones premium.'
-            : 'Funciones core ilimitadas. Para activar Premium, escríbenos y lo activamos manualmente.'
-          }
-        </p>
+        {!isPremium && (
+          <button
+            onClick={() => openCheckout('annual')}
+            className="btn-primary text-sm gap-1.5 flex-shrink-0"
+          >
+            <Sparkles size={13} strokeWidth={1.5} />
+            Activar Premium
+          </button>
+        )}
       </div>
+
       {!isPremium && (
-        <a
-          href="mailto:soporte@mypatrimony.com?subject=Activar%20Premium%20Patrimonio"
-          className="btn-primary text-sm gap-1.5"
-        >
-          <Sparkles size={13} strokeWidth={1.5} />
-          Activar Premium
-        </a>
+        <div className="border border-ink/8 rounded-sm p-4 bg-bone/30 grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="font-semibold text-ink">Mensual</p>
+            <p className="font-display text-2xl tracking-tightest mt-0.5">$19.900</p>
+            <p className="text-xs text-ink/45">COP / mes</p>
+          </div>
+          <div className="relative">
+            <span className="absolute -top-2.5 left-0 text-[10px] font-bold uppercase tracking-wider bg-gold text-paper px-1.5 py-0.5 rounded-sm">
+              Mejor valor
+            </span>
+            <p className="font-semibold text-ink mt-1">Anual</p>
+            <p className="font-display text-2xl tracking-tightest mt-0.5">$149.000</p>
+            <p className="text-xs text-ink/45">COP / año · 4 meses gratis</p>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -229,7 +259,7 @@ export default function Configuracion() {
   return (
     <>
       <PageHeader
-        eyebrow="Sección 06"
+        eyebrow="Sección 07"
         title="Configuración"
         subtitle="Gestiona tu perfil, seguridad, apariencia y suscripción."
       />

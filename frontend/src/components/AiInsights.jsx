@@ -6,6 +6,7 @@ import {
   Flag, Shield,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
+import { useCheckout } from '../contexts/CheckoutContext.jsx';
 import { api } from '../services/api.js';
 import { formatCOP } from '../utils/format.js';
 
@@ -163,6 +164,7 @@ function LoadingState() {
 
 // ── Teaser free ───────────────────────────────────────────────────────────────
 function LockedCard() {
+  const { openCheckout } = useCheckout();
   return (
     <section className="card-elevated overflow-hidden">
       <div className="px-8 py-5 border-b border-ink/10 flex items-center justify-between">
@@ -198,20 +200,15 @@ function LockedCard() {
               <Lock size={20} strokeWidth={1.5} className="text-gold" />
             </div>
             <p className="font-display text-xl tracking-tightest mb-2">Análisis con IA</p>
-            <p className="text-sm text-ink/55 leading-relaxed mb-1">
-              Score de salud financiera desglosado, insights con números reales y proyección personalizada de tus metas de ahorro.
+            <p className="text-sm text-ink/55 leading-relaxed">
+              Score desglosado, insights con tus números reales y proyección de metas.
+              Desde <strong>$19.900/mes</strong> o <strong>$149.000/año</strong>.
             </p>
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <a
-              href="mailto:soporte@mypatrimony.com?subject=Activar%20Premium"
-              className="btn-primary gap-2"
-            >
-              <Sparkles size={14} strokeWidth={1.5} />
-              Activar Premium
-            </a>
-            <span className="text-[11px] text-ink/35">soporte@mypatrimony.com</span>
-          </div>
+          <button onClick={() => openCheckout('annual')} className="btn-primary gap-2">
+            <Sparkles size={14} strokeWidth={1.5} />
+            Activar Premium
+          </button>
         </div>
       </div>
     </section>

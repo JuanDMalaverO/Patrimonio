@@ -31,7 +31,11 @@ export const api = {
   updateProfile:  (body) => request('/auth/profile',  { method: 'PUT', body: JSON.stringify(body) }),
   changePassword: (body) => request('/auth/password', { method: 'PUT', body: JSON.stringify(body) }),
 
-  // ── Suscripción — gestionada manualmente, sin self-service ───────────────────
+  // ── Pagos (Wompi) ─────────────────────────────────────────────────────────────
+  iniciarPago:  (plan) => request('/pagos',          { method: 'POST', body: JSON.stringify({ plan }) }),
+  estadoPago:   (ref)  => request(`/pagos/estado?ref=${encodeURIComponent(ref)}`),
+
+  // ── Suscripción — gestionada vía Wompi, sin self-service legacy ───────────────
 
   // ── IA ─────────────────────────────────────────────────────────────────────
   getInsights:     (periodo) => request(`/ai/insights?periodo=${periodo}`),

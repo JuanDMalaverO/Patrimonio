@@ -31,6 +31,7 @@ CREATE TABLE usuarios (
     -- Onboarding y plan
     onboarding_completado TINYINT(1) DEFAULT 0,
     plan ENUM('free', 'premium') DEFAULT 'free',
+    plan_expires_at TIMESTAMP NULL DEFAULT NULL, -- NULL = sin expiración (plan manual/vitalicio)
 
     -- Trazabilidad
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -190,6 +191,26 @@ CREATE TABLE metas (
 
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     INDEX idx_metas_usuario (usuario_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------
+-- 10. Pagos (historial de transacciones Wompi)
+-- -----------------------------------------------------
+CREATE TABLE pagos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id   BINARY(16)   NOT NULL,
+    referencia   VARCHAR(64)  NOT NULL UNIQUE,  -- PAT-XXXX-timestamp (nuestra referencia)
+    wompi_id     VARCHAR(100) NULL,              -- ID de transacción de Wompi
+    plan         ENUM('monthly','annual') NOT NULL,
+    monto_cop    INT          NOT NULL,          -- Monto en COP
+    estado       ENUM('pendiente','aprobado','declinado','anulado','error') NOT NULL DEFAULT 'pendiente',
+    wompi_payload JSON NULL,                     -- Payload completo del webhook
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    INDEX idx_pagos_referencia (referencia),
+    INDEX idx_pagos_usuario    (usuario_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================

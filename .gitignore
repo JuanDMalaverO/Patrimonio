@@ -1,5 +1,7 @@
 # API keys y configuración sensible — NUNCA subir al repo
 backend/config/ai.php
+backend/config/mail.php
+backend/config/wompi.php
 
 # Dependencias
 frontend/node_modules/
