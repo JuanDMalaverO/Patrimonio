@@ -1,7 +1,7 @@
 // src/components/TutorialSpotlight.jsx
 // Spotlight tutorial: darkens the page, draws a glowing ring around the target element,
 // shows a positioned tooltip with an arrow. Modal (z-50) naturally sits on top (z-[47]).
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { X, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -16,6 +16,7 @@ const TIP_Z     = 47;
 export default function TutorialSpotlight() {
   const { active, step, steps, skipTutorial, completeStep } = useTutorial();
   const [rect, setRect] = useState(null);
+  const targetElRef = useRef(null);
   const location = useLocation();
 
   const currentStep = active ? steps[step] : null;
@@ -30,13 +31,30 @@ export default function TutorialSpotlight() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (!active || !onThisPage) { setRect(null); return; }
+    if (!active || !onThisPage) {
+      setRect(null);
+      if (targetElRef.current) {
+        targetElRef.current.classList.remove('tutorial-target-pulse');
+        targetElRef.current = null;
+      }
+      return;
+    }
 
     // Retry until element renders (page may still be loading)
+    const removePulse = () => {
+      if (targetElRef.current) {
+        targetElRef.current.classList.remove('tutorial-target-pulse');
+        targetElRef.current = null;
+      }
+    };
+
     let attempts = 0;
     const tryFind = () => {
       const el = document.querySelector(currentStep.targetSelector);
       if (el) {
+        removePulse();
+        targetElRef.current = el;
+        el.classList.add('tutorial-target-pulse');
         el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         measure();
       } else if (attempts < 12) {
@@ -51,6 +69,7 @@ export default function TutorialSpotlight() {
       clearTimeout(t);
       window.removeEventListener('resize', measure);
       window.removeEventListener('scroll', measure, true);
+      removePulse();
     };
   }, [active, step, onThisPage, measure]);
 
