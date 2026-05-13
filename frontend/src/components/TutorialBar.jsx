@@ -5,7 +5,7 @@ import { ArrowRight, X } from 'lucide-react';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
 export default function TutorialBar() {
-  const { active, step, steps, skipTutorial } = useTutorial();
+  const { active, step, steps, phase, skipTutorial } = useTutorial();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -14,7 +14,7 @@ export default function TutorialBar() {
   const current    = steps[step];
   const onThisPage = location.pathname === current.path;
 
-  // Spotlight handles the tutorial when on the correct page — bar only needed for navigation
+  // IntroCard / Spotlight handle the correct page — bar only shows when navigating elsewhere
   if (onThisPage) return null;
 
   const bar = (
