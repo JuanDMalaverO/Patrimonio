@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { formatCOP, formatDate } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import MoneyInput from '../components/MoneyInput.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -291,11 +292,11 @@ function TransaccionModal({ open, onClose, cuentas, categorias, onSaved }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Monto (COP)</label>
-            <input
-              type="number" step="0.01" min="0.01" required
+            <MoneyInput
+              required
               className="input num text-xl"
               value={form.monto}
-              onChange={e => setForm({ ...form, monto: e.target.value })}
+              onChange={val => setForm({ ...form, monto: val })}
               placeholder="0"
             />
           </div>

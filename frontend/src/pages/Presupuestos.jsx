@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { formatCOP, currentPeriod, periodLabel } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import MoneyInput from '../components/MoneyInput.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -219,11 +220,11 @@ function PresupuestoModal({ open, onClose, categorias, periodo, onSaved }) {
 
         <div>
           <label className="label">Monto límite (COP)</label>
-          <input
-            type="number" step="0.01" min="1" required
+          <MoneyInput
+            required
             className="input num text-xl"
             value={form.monto_limite}
-            onChange={e => setForm({ ...form, monto_limite: e.target.value })}
+            onChange={val => setForm({ ...form, monto_limite: val })}
             placeholder="0"
           />
         </div>

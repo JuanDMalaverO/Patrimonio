@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { formatCOP } from '../utils/format';
 import PageHeader from '../components/PageHeader';
 import Modal from '../components/Modal';
+import MoneyInput from '../components/MoneyInput.jsx';
 import { Loading, ErrorBox, Empty } from '../components/States';
 import { useTutorial } from '../contexts/TutorialContext.jsx';
 
@@ -285,12 +286,12 @@ function CuentaModal({ open, onClose, onSaved }) {
         {/* Saldo inicial */}
         <div>
           <label className="label">Saldo inicial (COP)</label>
-          <input
+          <MoneyInput
             className="input num"
-            type="number"
-            step="0.01"
             value={form.saldo_inicial}
-            onChange={e => setForm({ ...form, saldo_inicial: e.target.value })}
+            onChange={val => setForm({ ...form, saldo_inicial: val })}
+            allowNegative
+            placeholder="0"
           />
           <p className="text-xs text-ink/45 mt-1.5">Para tarjetas de crédito usa valores negativos.</p>
         </div>
