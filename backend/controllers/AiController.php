@@ -268,67 +268,62 @@ class AiController {
         $apiKey = defined('ANTHROPIC_API_KEY') ? ANTHROPIC_API_KEY : '';
         if (empty($apiKey)) Response::error('API key no configurada.', 503);
 
-        $system = <<<'PROMPT'
-Eres el asesor financiero integrado de Patrimonio, app colombiana de finanzas personales. Montos en COP.
+        // Prompt en inglés con ASCII puro — evita problemas de encoding con caracteres especiales
+        $system = 'You are the built-in financial advisor for Patrimonio, a Colombian personal finance app. All amounts are in COP.
 
-GENERA UN ANÁLISIS COMPLETO en 3 partes:
+Respond with ONLY a valid JSON object. No markdown, no code blocks, no text before or after the JSON.
 
-━━ PARTE 1: SCORE DE SALUD FINANCIERA (0-100)
-Calcula un score global y desglósalo en 4 componentes (cada uno 0-10):
-• Tasa de ahorro: 10 = ≥25% del ingreso | 7 = 15-24% | 4 = 5-14% | 1 = <5% o negativo
-• Fondo de emergencia: 10 = ≥6 meses | 7 = 3-5 meses | 4 = 1-2 meses | 1 = <1 mes o sin datos
-• Control de presupuestos: 10 = todos en rango | 7 = máx 1 alerta | 4 = algún excedido | 1 = sin presupuestos
-• Progreso de metas: 10 = ≥75% o sin metas | 7 = 50-74% | 4 = 25-49% | 1 = <25%
-Score global = promedio ponderado (ahorro 35%, fondo 30%, presupuestos 20%, metas 15%).
-Si no hay datos para un componente, asigna 5 y nota "Sin datos suficientes".
-
-━━ PARTE 2: INSIGHTS ACCIONABLES (3-5)
-Cada insight DEBE:
-- Citar un número concreto de los datos proporcionados
-- Ser específico a Colombia (usa "salario mínimo", "DTF", "CDT" cuando aplique)
-PROHIBIDO: consejos sin cifra ("ahorra más", "controla tus gastos")
-
-━━ PARTE 3: PROYECCIÓN DE METAS
-Solo si hay metas_ahorro activas. Para cada meta: en cuántos meses llega con el ritmo actual VS cuánto aportaría para llegar 30% más rápido.
-Si no hay metas, devuelve array vacío.
-
-FORMATO ESTRICTO — solo JSON válido, sin texto ni markdown:
+EXACT JSON structure required:
 {
   "score": {
-    "valor": <0-100>,
-    "etiqueta": "Crítico|En riesgo|Estable|Sólido|Excelente",
-    "razon": "Una oración con el número clave que lo justifica.",
+    "valor": <integer 0-100>,
+    "etiqueta": "<one of: Critico|En riesgo|Estable|Solido|Excelente>",
+    "razon": "<one sentence citing a specific number from the data>",
     "componentes": [
-      {"nombre": "Tasa de ahorro", "puntaje": <0-10>, "max": 10, "detalle": "X% — meta: ≥20%"},
-      {"nombre": "Fondo emergencia", "puntaje": <0-10>, "max": 10, "detalle": "X meses cubiertos — meta: 3-6"},
-      {"nombre": "Presupuestos", "puntaje": <0-10>, "max": 10, "detalle": "X de Y dentro del límite"},
-      {"nombre": "Metas de ahorro", "puntaje": <0-10>, "max": 10, "detalle": "X% de progreso promedio"}
+      {"nombre": "Tasa de ahorro",   "puntaje": <0-10>, "max": 10, "detalle": "<X% de ahorro - meta: 20%+>"},
+      {"nombre": "Fondo emergencia", "puntaje": <0-10>, "max": 10, "detalle": "<X meses cubiertos - meta: 3-6>"},
+      {"nombre": "Presupuestos",     "puntaje": <0-10>, "max": 10, "detalle": "<X de Y presupuestos en rango>"},
+      {"nombre": "Metas de ahorro",  "puntaje": <0-10>, "max": 10, "detalle": "<X% promedio de progreso>"}
     ]
   },
   "insights": [
     {
-      "tipo": "alerta|riesgo|positivo|oportunidad",
-      "titulo": "Máx 7 palabras, directo",
-      "descripcion": "Hecho concreto con número. Máx 2 oraciones.",
-      "accion": "Qué hacer exactamente con número. null si no aplica.",
-      "impacto": "Resultado proyectado cuantificado. null si no aplica."
+      "tipo": "<one of: alerta|riesgo|positivo|oportunidad>",
+      "titulo": "<max 8 words in Spanish>",
+      "descripcion": "<specific fact + number from the data, max 2 sentences, in Spanish>",
+      "accion": "<concrete action with a specific number, in Spanish, or null>",
+      "impacto": "<projected quantified result, in Spanish, or null>"
     }
   ],
   "metas_proyeccion": [
     {
-      "nombre": "Nombre de la meta",
-      "comentario": "Con tu ritmo actual llegarías en X meses. Aportando $Y.000 más/mes lo logras en Z meses."
+      "nombre": "<goal name>",
+      "comentario": "<months at current pace + how much extra per month to finish 30% faster, in Spanish>"
     }
   ]
 }
-PROMPT;
 
-        $userMsg = "Analiza estos datos financieros:\n\n"
+Score rules:
+- Tasa de ahorro (weight 35%): puntaje 10 = savings rate >=25% | 7 = 15-24% | 4 = 5-14% | 1 = <5% or negative
+- Fondo emergencia (weight 30%): puntaje 10 = >=6 months covered | 7 = 3-5 months | 4 = 1-2 months | 1 = <1 month or no data
+- Presupuestos (weight 20%): puntaje 10 = all on track | 7 = max 1 alert | 4 = any exceeded | 1 = no budgets set
+- Metas de ahorro (weight 15%): puntaje 10 = >=75% progress or no goals | 7 = 50-74% | 4 = 25-49% | 1 = <25%
+- Global score = weighted average rounded to integer
+- etiqueta: 0-40=Critico, 41-59=En riesgo, 60-74=Estable, 75-89=Solido, 90-100=Excelente
+- If no data for a component, use puntaje=5 and detalle="Sin datos suficientes"
+
+Insights rules:
+- Generate 3 to 5 insights
+- EACH insight MUST cite at least one specific number from the provided data
+- FORBIDDEN: generic advice without numbers ("save more", "spend less", "diversify")
+- metas_proyeccion: one entry per goal in metas_ahorro array; if metas_ahorro is empty, return empty array []';
+
+        $userMsg = "Analyze this financial data and return only the JSON:\n\n"
                  . json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-        // Limitar tamaño del mensaje para no exceder contexto
-        if (strlen($userMsg) > 8000) {
-            $userMsg = substr($userMsg, 0, 8000) . "\n...[datos truncados]";
+        // Safe UTF-8 truncation
+        if (mb_strlen($userMsg, 'UTF-8') > 6000) {
+            $userMsg = mb_substr($userMsg, 0, 6000, 'UTF-8') . "\n...[data truncated for length]";
         }
 
         $payload = json_encode([
@@ -348,13 +343,12 @@ PROMPT;
                 'x-api-key: ' . $apiKey,
                 'anthropic-version: 2023-06-01',
             ],
-            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_TIMEOUT        => 28,
             CURLOPT_CONNECTTIMEOUT => 8,
         ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        // curl_close deprecated since PHP 8.5 — handle freed automatically
 
         if ($response === false || $httpCode !== 200) {
             $err = json_decode((string)$response, true);
@@ -365,23 +359,60 @@ PROMPT;
         $data = json_decode($response, true);
         $text = trim($data['content'][0]['text'] ?? '');
 
-        if (preg_match('/\{[\s\S]*\}/u', $text, $m)) {
+        return $this->parseAndSanitize($text);
+    }
+
+    /**
+     * Extrae el JSON de la respuesta de Claude (maneja markdown, texto extra, etc.)
+     * y rellena valores por defecto para campos faltantes en lugar de fallar.
+     */
+    private function parseAndSanitize(string $text): array {
+        // 1. Quitar bloques de código markdown si los hay (```json ... ```)
+        $clean = preg_replace('/^```(?:json)?\s*/i', '', $text);
+        $clean = preg_replace('/\s*```\s*$/i', '', $clean ?? $text);
+        $clean = trim($clean ?? $text);
+
+        // 2. Extraer el objeto JSON más externo del texto
+        $parsed = null;
+        if (preg_match('/\{[\s\S]*\}/u', $clean, $m)) {
             $parsed = json_decode($m[0], true);
-            if ($parsed
-                && isset($parsed['score']['valor'], $parsed['score']['componentes'])
-                && isset($parsed['insights'])
-                && is_array($parsed['insights'])
-            ) {
-                // Sanitize: max 5 insights, max 4 componentes
-                $parsed['insights']          = array_slice($parsed['insights'], 0, 5);
-                $parsed['score']['componentes'] = array_slice($parsed['score']['componentes'] ?? [], 0, 4);
-                $parsed['metas_proyeccion']  = array_slice($parsed['metas_proyeccion'] ?? [], 0, 5);
-                return $parsed;
-            }
         }
 
-        Response::error('La IA devolvió una respuesta inesperada. Intenta de nuevo.', 503);
-        exit; // satisface el analizador — Response::error ya llama exit internamente
+        // 3. Si sigue sin parsear, intentar el texto completo directamente
+        if (!is_array($parsed)) {
+            $parsed = json_decode($clean, true);
+        }
+
+        if (!is_array($parsed)) {
+            error_log('[Patrimonio AI] Respuesta no parseable (' . strlen($text) . ' chars): ' . substr($text, 0, 300));
+            Response::error('El análisis no pudo generarse en este momento. Intenta de nuevo en unos minutos.', 503);
+            exit;
+        }
+
+        // 4. Sanitizar — rellenar defaults para campos opcionales faltantes
+        if (!isset($parsed['score']) || !is_array($parsed['score'])) {
+            $parsed['score'] = [];
+        }
+        $s = &$parsed['score'];
+        $s['valor']    = max(0, min(100, (int)($s['valor'] ?? 50)));
+        $s['etiqueta'] = $s['etiqueta'] ?? 'Estable';
+        $s['razon']    = $s['razon']    ?? '';
+        $s['componentes'] = array_slice(
+            is_array($s['componentes'] ?? null) ? $s['componentes'] : [],
+            0, 4
+        );
+        unset($s);
+
+        $parsed['insights'] = array_slice(
+            is_array($parsed['insights'] ?? null) ? $parsed['insights'] : [],
+            0, 5
+        );
+        $parsed['metas_proyeccion'] = array_slice(
+            is_array($parsed['metas_proyeccion'] ?? null) ? $parsed['metas_proyeccion'] : [],
+            0, 5
+        );
+
+        return $parsed;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
